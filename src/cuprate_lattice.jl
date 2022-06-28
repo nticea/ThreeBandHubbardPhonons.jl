@@ -1,4 +1,7 @@
-
+"""
+    Just a small helper function for converting a coordinates
+    in terms of unit cells to a site in the MPS representation
+"""
 function to_site_number(Ny::Int, x::Int, 
                         y::Int, type::String)
     if type=="d"
@@ -9,6 +12,45 @@ function to_site_number(Ny::Int, x::Int,
         return (x-1)*Ny*3 + 2*Ny + y
     end
 end
+
+struct LatticeBondCuprate
+    s1::Int
+    s2::Int
+    x1::Float64
+    y1::Float64
+    x2::Float64
+    y2::Float64
+    sign::Int
+    type::String
+  end
+  
+  """
+    LatticeBondCuprate(s1::Int,s2::Int,
+                    x1::Real,y1::Real,
+                    x2::Real,y2::Real,
+                    sign::Int,
+                    type::String="")
+  Construct a LatticeBond struct by
+  specifying just the numbers of sites
+  1 and 2, or additional details including
+  the (x,y) coordinates of the two sites and
+  an optional phase factor and/or type string.
+  """
+  function LatticeBondCuprate(s1::Int, s2::Int)
+    return LatticeBondCuprate(s1, s2, 0.0, 0.0, 0.0, 0.0, 1, "")
+  end
+  
+  function LatticeBondCuprate(
+    s1::Int, s2::Int, x1::Real, y1::Real, x2::Real, y2::Real, sign::Int, bondtype::String=""
+  )
+    cf(x) = convert(Float64, x)
+    return LatticeBondCuprate(s1, s2, cf(x1), cf(y1), cf(x2), cf(y2), sign, bondtype)
+  end
+  
+  """
+  LatticeCuprate is an alias for Vector{LatticeBondCuprate}
+  """
+  const LatticeCuprate = Vector{LatticeBondCuprate}
 
 """
 OxygenCopper_lattice(Nx::Int,
@@ -27,7 +69,7 @@ function OxygenCopper_lattice(Nx::Int, Ny::Int; kwargs...)::Lattice
   yperiodic = get(kwargs, :yperiodic, true)
   yperiodic = yperiodic && (Ny > 1)
   Nbond = 4*(Nx-2)*(Ny-2) + 4*(Nx-1) + 4*(Ny-2) + 3*(Nx-1) + 3*(Ny-1) + 2 + (yperiodic ? Nx : 0)
-  latt = Lattice(undef, Nbond)
+  latt = LatticeCuprate(undef, Nbond)
   b = 0
 
   for x in 1:Nx
@@ -37,25 +79,25 @@ function OxygenCopper_lattice(Nx::Int, Ny::Int; kwargs...)::Lattice
 
         # Add a pd bond to the right 
         n2 = to_site_number(Ny, x, y, "px")
-        latt[b += 1] = LatticeBond(n1, n2, x, y, x, y, "+")
+        latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, y, 1, "pd")
 
         # Add a pd bond to the left
         if x>1
             n2 = to_site_number(Ny, x-1, y, "px")
-            latt[b += 1] = LatticeBond(n1, n2, x, y, x-1, y, "-")
+            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x-1, y, -1, "pd")
         end
 
         # Add a pd bond above
         n2 = to_site_number(Ny, x, y, "py")
-        latt[b += 1] = LatticeBond(n1, n2, x, y, x, y, "-")
+        latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, y, -1, "pd")
 
         # Add a pd bond below
         if y>1
             n2 = to_site_number(Ny, x, y-1, "py")
-            latt[b += 1] = LatticeBond(n1, n2, x, y, x, y-1, "+")
+            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, y-1, 1, "pd")
         elseif yperiodic
             n2 = to_site_number(Ny, x, Ny, "py")
-            latt[b += 1] = LatticeBond(n1, n2, x, y, x, Ny, "+")
+            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, Ny, 1, "pd")
         end
     end
   end
@@ -79,7 +121,7 @@ function OxygenOxygen_lattice(Nx::Int, Ny::Int; kwargs...)::Lattice
   yperiodic = get(kwargs, :yperiodic, true)
   yperiodic = yperiodic && (Ny > 1)
   Nbond = 4*(Nx-1)*(Ny-1) + (Ny-1)*2 + (Nx-1)*2 + 1 + (yperiodic ? (Nx-1)*2+1 : 0)
-  latt = Lattice(undef, Nbond)
+  latt = LatticeCuprate(undef, Nbond)
   b = 0
 
   for x in 1:Nx
@@ -89,31 +131,31 @@ function OxygenOxygen_lattice(Nx::Int, Ny::Int; kwargs...)::Lattice
 
         # Add a px-py bond to the upper left (in phase)
         n2 = to_site_number(Ny, x, y, "py")
-        latt[b += 1] = LatticeBond(n1, n2, x, y, x, y, "+")
+        latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, y, 1, "pp")
 
         # Add a px-py bond to the upper right (out of phase)
         if x<Nx
             n2 = to_site_number(Ny, x+1, y, "py")
-            latt[b += 1] = LatticeBond(n1, n2, x, y, x+1, y, "-")
+            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x+1, y, -1, "pp")
         end
 
         # Add a px-py to the lower left (out of phase)
         if y>1
             n2 = to_site_number(Ny, x, y-1, "py")
-            latt[b += 1] = LatticeBond(n1, n2, x, y, x, y-1, "-")
+            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, y-1, -1, "pp")
         elseif yperiodic
             n2 = to_site_number(Ny, x, Ny, "py")
-            latt[b += 1] = LatticeBond(n1, n2, x, y, x, Ny, "-")
+            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, Ny, -1, "pp")
         end
 
         # Add a px-py to the lower right (in phase)
         if x<Nx
             if y>1
                 n2 = to_site_number(Ny, x+1, y-1, "py")
-                latt[b += 1] = LatticeBond(n1, n2, x, y, x+1, y-1, "+")
+                latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x+1, y-1, 1, "pp")
             elseif yperiodic
                 n2 = to_site_number(Ny, x+1, Ny, "py")
-                latt[b += 1] = LatticeBond(n1, n2, x, y, x+1, Ny, "+")
+                latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x+1, Ny, 1, "pp")
             end
         end
         
