@@ -65,7 +65,7 @@ but can be made open in the y direction
 by specifying the keyword argument
 `yperiodic=false`.
 """
-function OxygenCopper_lattice(Nx::Int, Ny::Int; kwargs...)::Lattice
+function OxygenCopper_lattice(Nx::Int, Ny::Int; kwargs...)::LatticeCuprate
   yperiodic = get(kwargs, :yperiodic, true)
   yperiodic = yperiodic && (Ny > 1)
   Nbond = 4*(Nx-2)*(Ny-2) + 4*(Nx-1) + 4*(Ny-2) + 3*(Nx-1) + 3*(Ny-1) + 2 + (yperiodic ? Nx : 0)
@@ -117,7 +117,7 @@ but can be made open in the y direction
 by specifying the keyword argument
 `yperiodic=false`.
 """
-function OxygenOxygen_lattice(Nx::Int, Ny::Int; kwargs...)::Lattice
+function OxygenOxygen_lattice(Nx::Int, Ny::Int; kwargs...)::LatticeCuprate
   yperiodic = get(kwargs, :yperiodic, true)
   yperiodic = yperiodic && (Ny > 1)
   Nbond = 4*(Nx-1)*(Ny-1) + (Ny-1)*2 + (Nx-1)*2 + 1 + (yperiodic ? (Nx-1)*2+1 : 0)
@@ -162,4 +162,44 @@ function OxygenOxygen_lattice(Nx::Int, Ny::Int; kwargs...)::Lattice
     end
   end
   return latt
+end
+
+"""
+    Make the coefficients based on the positioning of d, px, and py orbitals
+"""
+function make_coefficients(Nx::Int, Ny::Int, d, px, py)
+    coefs = []
+    for col in 1:Nx
+        for row in 1:Ny
+            push!(coefs, d)
+            push!(coefs,py)
+        end
+        for row in 1:Ny
+            push!(coefs,px)
+        end 
+    end
+    return coefs 
+end
+
+"""
+    function argsort_lattice(a, Nx::Int, Ny::Int)
+given an array a of length Nsites, it will rearrange it into the shape of the lattice
+the unit cells are flattened along the x direction as (py , d , px)
+returns an array of shape (Ny x 3*Nx)
+"""
+function reshape_into_lattice(a, Nx::Int, Ny::Int)
+    a_lattice = zeros(Ny, 3*Nx)
+    # Iterate through each of the cells 
+    for y in 1:Ny
+        s=0
+        for x in 1:Nx
+            idx_d = to_site_number(Ny, x, y, "d")
+            idx_px = to_site_number(Ny, x, y, "px")
+            idx_py = to_site_number(Ny, x, y, "py")
+            a_lattice[y, s+=1] = a[idx_py]
+            a_lattice[y, s+=1] = a[idx_d]
+            a_lattice[y, s+=1] = a[idx_px]
+        end
+    end
+    return a_lattice 
 end
