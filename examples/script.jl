@@ -6,21 +6,21 @@ include(joinpath(@__DIR__,"../src/model.jl"))
 include(joinpath(@__DIR__,"../src/utilities.jl"))
 
 ## SAVING INFO ##
-DO_SAVE = true
+DO_SAVE = false
 #INTERIM_SAVE = false
-MINIMAL_SAVE = true
+MINIMAL_SAVE = false
 
 ## PARAMETERS ## 
 
 # Model 
-Nx=40
-Ny=1
+Nx=96
+Ny=2
 μ=0
 εd=0
 εp=3
 tpd=1
-tpp=0.3
-Upd=0.5
+tpp=0.5
+Upd=3
 Upp=3
 Udd=8
 ω=0#0.5
@@ -29,12 +29,12 @@ g0dd=0#0.1
 g1pd=0#0.1
 g1dp=0#0.1
 g1pp=0#0.1
-doping=0
+doping=0.125
 max_phonons=0#1 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
-DMRG_numsweeps = 2
-DMRG_maxdim = 1000
+DMRG_numsweeps = 60
+DMRG_maxdim = 2048
 DMRG_cutoff = 1E-10 
 
 ## CODE ## 
@@ -64,7 +64,7 @@ if MINIMAL_SAVE
 end
 if DO_SAVE
     save_structs(params, save_path_full)
-    save_structs(hubbholst, save_path_full)
+    save_structs(TBHModel, save_path_full)
 end
 
 # Run DMRG

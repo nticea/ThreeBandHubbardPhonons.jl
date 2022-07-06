@@ -110,11 +110,11 @@ function load_structs(loadpath::String; load_gs=true,
     if load_gs
         ground_state = read(f, "ground_state", MPS)
         sites = siteinds(ground_state)
-        hubbholst = HubbardHolsteinModel(params, sites)
+        hm = ThreeBandModel(params, sites)
     else
         ground_state = nothing
         sites = nothing
-        hubbholst = nothing
+        hm = nothing
     end
     if load_phi
         phi_t = read(f, "phi_t", MPS)
@@ -153,8 +153,8 @@ function load_structs(loadpath::String; load_gs=true,
     equilibrium_corr = EquilibriumCorrelations(d["start"], d["stop"], 
                                                 d["spin"], d["charge"], 
                                                 d["sSC"], d["pSC"], d["dSC"])
-    tebd_results = TEBDResults(d["entropy"], d["self_overlap"],
-                                d["corrs"], phi_t, psi_t)
+    # tebd_results = TEBDResults(d["entropy"], d["self_overlap"],
+    #                             d["corrs"], phi_t, psi_t)
 
-    return params, hubbholst, dmrg_results, equilibrium_corr, tebd_results
+    return params, hm, dmrg_results, equilibrium_corr#, tebd_results
 end

@@ -184,7 +184,7 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     ampo = OpSum()
 
     # on-site terms 
-    μ_coefs = make_coefficients(Nx, Ny, μ-εd, μ-εp, μ-εp)
+    μ_coefs = make_coefficients(Nx, Ny, εd-μ, εp-μ, εp-μ)
     U_coefs = make_coefficients(Nx, Ny, Udd, Upp, Upp)
     eph_coefs = make_coefficients(Nx, Ny, g0dd, g0pp, g0pp)
     for n in 1:Nsites
@@ -210,17 +210,17 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
 
     # copper-oxygen hopping 
     for b in dp_lattice
-        ampo .+= -b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2
-        ampo .+= -b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1
-        ampo .+= -b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2
-        ampo .+= -b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1
+        ampo .+= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2
+        ampo .+= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1
+        ampo .+= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2
+        ampo .+= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1
     end
     # oxygen-oxygen hopping 
     for b in pp_lattice
-        ampo .+= -b.sign*tpp, "Cdagup", b.s1, "Cup", b.s2
-        ampo .+= -b.sign*tpp, "Cdagup", b.s2, "Cup", b.s1
-        ampo .+= -b.sign*tpp, "Cdagdn", b.s1, "Cdn", b.s2
-        ampo .+= -b.sign*tpp, "Cdagdn", b.s2, "Cdn", b.s1
+        ampo .+= b.sign*tpp, "Cdagup", b.s1, "Cup", b.s2
+        ampo .+= b.sign*tpp, "Cdagup", b.s2, "Cup", b.s1
+        ampo .+= b.sign*tpp, "Cdagdn", b.s1, "Cdn", b.s2
+        ampo .+= b.sign*tpp, "Cdagdn", b.s2, "Cdn", b.s1
     end
 
     if max_phonons>0
@@ -292,10 +292,15 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
     downs = "Dn,"*string(p.init_phonons)
     emps = "Emp,"*string(p.init_phonons)
     
-    state = [isodd(n) ? ups : downs for n=1:p.Nsites] 
+    state = make_coefficients(p.Nx, p.Ny, ups, emps, emps)
+    # Make every other hole a down 
+    inds = findall(x -> x==ups, state)[begin:2:end]
+    state[inds] .= downs
+    ## NOTE: WE WANT TO MAKE EVERY OTHER UP → DOWN 
 
     # Account for doping
     if p.doping > 0
+        @error "Doping not implemented yet"
         spacing = floor(Int,1/p.doping)
         state[1:spacing:end] .= emps
     end
@@ -432,27 +437,14 @@ end
 
 function compute_all_equilibrium_correlations(dmrg_results::DMRGResults, 
                                             HM::ThreeBandModel, p::Parameters;
-                                            start=nothing, stop=nothing)
+                                            buffer=1)
+    Nsites, Nx, Ny = p.Nsites, p.Nx, p.Ny
     ϕ = copy(dmrg_results.ground_state)
-
-    # Avoid edge effects by only considering the middle 
-    # N = p.Nsites
-    # if isnothing(start)
-    #     start = floor(Int,0.25*N)
-    # end 
-    # if isnothing(stop)
-    #     stop = ceil(Int,0.75*N)
-    # end
-    # lencorrs = stop-start+1
-    # if (stop-start+1)%Ny != 0
-    #     stop += (Ny - lencorrs%Ny)
-    # end
-
-    # @assert stop <= N
-    # @assert (stop-start+1)%Ny == 0
+    start = 4+(buffer-1)*3
+    stop = 3*Nx - 3 - (buffer-1)*3
 
     # Compute the correlations for each row separately 
-    lattice_indices = reshape_into_lattice(collect(1:p.Nsites), p.Nx, p.Ny)
+    lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
     lattice_indices = convert.(Int, lattice_indices)
 
     # Iterate through all the correlations types and compute them 
@@ -463,14 +455,14 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
         # discard the first unit cell due to edge effects 
         for y in 1:Ny
             if Ny ==1
-                indices = lattice_indices[y,4:end-2]
-                corr[y,4:end-2] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+                indices = lattice_indices[y,start:stop]
+                corr[y,start:stop] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
             elseif y == 1
-                indices = lattice_indices[y,4:end]
-                corr[y,4:end] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+                indices = lattice_indices[y,start:end]
+                corr[y,start:end] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
             elseif y == Ny
-                indices = lattice_indices[y,1:end-2]
-                corr[y,1:end-2] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+                indices = lattice_indices[y,1:stop]
+                corr[y,1:stop] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
             else
                 indices = lattice_indices[y,:]
                 corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
@@ -478,16 +470,20 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
         end
         # Fill in the first 3 and last 3 elements by taking averages from the other ladders
         if Ny > 1
-            corr[1,1:3] = mean(corr[2:end,1:3], dims=1)
-            corr[Ny,end-2:end] = mean(corr[1:Ny-1,end-2:end], dims=1)
+            corr[1,1:start-1] = mean(corr[2:end,1:start-1], dims=1)
+            corr[Ny,stop+1:end] = mean(corr[1:Ny-1,stop+1:end], dims=1)
         else # we trim 
-            corr = corr[:, 4:end-2]
+            corr = corr[:, start:stop]
         end
 
         push!(corrs,corr)
     end
 
-    EquilibriumCorrelations(start, stop, corrs...)
+    if Ny > 1
+        return EquilibriumCorrelations(1, 3*Nx, corrs...)
+    else
+        return EquilibriumCorrelations(start, stop, corrs...)
+    end
 end
 
 function equilibrium_correlations(ϕ::MPS, indices, corrtype::String,sites)
