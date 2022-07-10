@@ -72,8 +72,6 @@ end
 # Visualize the lattice
 visualize_lattice(params)
 
-@assert 1==0
-
 # Run DMRG
 println("Finding ground state...")
 dmrg_results = run_DMRG(TBHModel, params, alg="divide_and_conquer")
