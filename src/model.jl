@@ -1,7 +1,8 @@
 using ITensors
 using Statistics: mean
-include("cuprate_lattice.jl")
-include("site_hubbholst.jl")
+include("lattices/cuprate_lattice.jl")
+include("sites/site_hubbholst.jl")
+include("lattices/visualize_lattice.jl")
 
 struct Parameters
     # Model 
@@ -174,6 +175,16 @@ function parameters(;Nx::Int, Ny::Int,
     
 end
 
+## LATTICE ##
+
+function visualize_lattice(p::Parameters)
+    Nx, Ny, yperiodic = p.Nx, p.Ny, p.yperiodic
+    pd_latt = OxygenCopper_lattice(Nx, Ny, yperiodic=yperiodic)
+    pp_latt = OxygenOxygen_lattice(Nx, Ny, yperiodic=yperiodic)
+    visualize(pd_latt)
+    visualize!(pp_latt)
+end
+
 function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     Nsites, Nx, Ny, yperiodic, max_phonons = p.Nsites, p.Nx, p.Ny, p.yperiodic, p.max_phonons
     μ, εd, εp, tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, g1dp, g1pp = p.μ, p.εd, p.εp, p.tpd, p.tpp, p.Upd, p.Upp, p.Udd, p.ω, p.g0pp, p.g0dd, p.g1pd, p.g1dp, p.g1pp
@@ -191,7 +202,8 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
         # chemical potential term
         ampo .+= μ_coefs[n], "Ntot", n
         # on-site repulsion
-        ampo .+= U_coefs[n], "Nup", n, "Ndn", n
+        #ampo .+= U_coefs[n], "Nup", n, "Ndn", n
+        ampo .+= U_coefs[n], "Nupdn", n
         if max_phonons>0
             # phonon 
             ampo .+= ω, "Nb", n
@@ -209,6 +221,7 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     end
 
     # copper-oxygen hopping 
+    # TRY FLIPPING THE SIGN
     for b in dp_lattice
         ampo .+= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2
         ampo .+= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1
@@ -292,21 +305,26 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
     downs = "Dn,"*string(p.init_phonons)
     emps = "Emp,"*string(p.init_phonons)
     
-    state = make_coefficients(p.Nx, p.Ny, ups, emps, emps)
+    state_arr = make_coefficients(p.Nx, p.Ny, ups, emps, emps)
     # Make every other hole a down 
-    inds = findall(x -> x==ups, state)[begin:2:end]
-    state[inds] .= downs
-    ## NOTE: WE WANT TO MAKE EVERY OTHER UP → DOWN 
+    inds_arr = findall(x -> x==ups, state_arr)[begin:2:end]
+    state_arr[inds_arr] .= downs
 
     # Account for doping
     if p.doping > 0
-        @error "Doping not implemented yet"
-        spacing = floor(Int,1/p.doping)
-        state[1:spacing:end] .= emps
+        @assert 1==0
+        Nh_doped = floor(Int, p.doping*p.N)
+        # put these holes on the px oxygen orbitals, spaced evenly apart 
+        spacing = 3*floor(Int,p.N/Nh_doped) # factor of 3 to account for unit cell size
+        # find the first empty index 
+        ## NO!! THIS DOESNT WORK THIS WAY 
+        start_idx = findfirst(x -> x==emps, state_arr)
+        state_arr[start_idx:2*spacing:end] .= ups 
+        state_arr[start_idx+spacing:2*spacing:end] .= downs 
     end
 
     # NOTE: the QN of this state is preserved during DMRG
-    productMPS(HM.sites,state) 
+    productMPS(HM.sites,state_arr) 
 end
 
 function ladder_expectation(ϕ::MPS, opname::String, p::Parameters)

@@ -13,14 +13,16 @@ MINIMAL_SAVE = false
 ## PARAMETERS ## 
 
 # Model 
-Nx=96
+Nx=6
 Ny=2
+yperiodic=false
+
 μ=0
 εd=0
 εp=3
 tpd=1
-tpp=0.5
-Upd=3
+tpp=0.3
+Upd=0.5
 Upp=3
 Udd=8
 ω=0#0.5
@@ -29,12 +31,12 @@ g0dd=0#0.1
 g1pd=0#0.1
 g1dp=0#0.1
 g1pp=0#0.1
-doping=0.125
+doping=0
 max_phonons=0#1 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
 DMRG_numsweeps = 60
-DMRG_maxdim = 2048
+DMRG_maxdim = 1000
 DMRG_cutoff = 1E-10 
 
 ## CODE ## 
@@ -53,7 +55,7 @@ end
 
 # Initialize 
 println("Initializing...")
-params = parameters(Nx=Nx, Ny=Ny, μ=μ, εd=εd, εp=εp, tpd=tpd, tpp=tpp, Upd=Upd, 
+params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, tpp=tpp, Upd=Upd, 
                     Upp=Upp, Udd=Udd, ω=ω, g0pp=g0pp, g0dd=g0dd, g1pd=g1pd, 
                     g1dp=g1dp, g1pp=g1pp, doping=doping, 
                     max_phonons=max_phonons, DMRG_numsweeps=DMRG_numsweeps,
@@ -66,6 +68,11 @@ if DO_SAVE
     save_structs(params, save_path_full)
     save_structs(TBHModel, save_path_full)
 end
+
+# Visualize the lattice
+visualize_lattice(params)
+
+@assert 1==0
 
 # Run DMRG
 println("Finding ground state...")
