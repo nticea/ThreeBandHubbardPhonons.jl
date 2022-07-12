@@ -110,8 +110,8 @@ function parameters(;Nx::Int, Ny::Int,
     εd=0,
     εp=3,
     tpd=1,
-    tpp=0.3,
-    Upd=0.5,
+    tpp=0.5,
+    Upd=0,
     Upp=3,
     Udd=8,
     ω::Real,
@@ -165,7 +165,7 @@ function parameters(;Nx::Int, Ny::Int,
         max_LBO_dim = 12
     end
     N = Nx*Ny # number of unit cells 
-    Nsites = N*3 # 3 sites per unit cell 
+    Nsites = 3*N + 2*Ny # 3 sites per unit cell + another rung to have equal # pos and neg phase bonds
     mid = ceil(Int,Nsites/2) # midpoint of the DMRG chain 
 
     return Parameters(N, Nx, Ny, Nsites, yperiodic, doping, max_phonons, init_phonons,
@@ -179,8 +179,8 @@ end
 
 function visualize_lattice(p::Parameters)
     Nx, Ny, yperiodic = p.Nx, p.Ny, p.yperiodic
-    pd_latt = OxygenCopper_lattice(Nx, Ny, yperiodic=yperiodic)
-    pp_latt = OxygenOxygen_lattice(Nx, Ny, yperiodic=yperiodic)
+    pd_latt = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic)
+    pp_latt = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic)
     visualize(pd_latt)
     visualize!(pp_latt)
 end
@@ -195,14 +195,13 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     ampo = OpSum()
 
     # on-site terms 
-    μ_coefs = make_coefficients(Nx, Ny, εd-μ, εp-μ, εp-μ)
-    U_coefs = make_coefficients(Nx, Ny, Udd, Upp, Upp)
-    eph_coefs = make_coefficients(Nx, Ny, g0dd, g0pp, g0pp)
+    μ_coefs = make_coefficients(Nx+1, Ny, εd-μ, εp-μ, εp-μ)
+    U_coefs = make_coefficients(Nx+1, Ny, Udd, Upp, Upp)
+    eph_coefs = make_coefficients(Nx+1, Ny, g0dd, g0pp, g0pp)
     for n in 1:Nsites
         # chemical potential term
         ampo .+= μ_coefs[n], "Ntot", n
         # on-site repulsion
-        #ampo .+= U_coefs[n], "Nup", n, "Ndn", n
         ampo .+= U_coefs[n], "Nupdn", n
         if max_phonons>0
             # phonon 
@@ -249,6 +248,11 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
             ampo .+= g1pp, "Bdag+B", b.s1, "Ntot", b.s2
         end
     end
+
+    # coefs = [real(a.args[1]) for a in ampo]
+    # @show sum(coefs) 
+    # coefs_counts = [(i, count(==(i), coefs)) for i in unique(coefs)]
+    # @show coefs_counts
 
     return MPO(ampo,sites)
 end
@@ -305,22 +309,25 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
     downs = "Dn,"*string(p.init_phonons)
     emps = "Emp,"*string(p.init_phonons)
     
-    state_arr = make_coefficients(p.Nx, p.Ny, ups, emps, emps)
+    state_arr = make_coefficients(p.Nx+1, p.Ny, ups, emps, emps)[1:p.Nsites]
     # Make every other hole a down 
     inds_arr = findall(x -> x==ups, state_arr)[begin:2:end]
     state_arr[inds_arr] .= downs
 
     # Account for doping
     if p.doping > 0
-        @assert 1==0
         Nh_doped = floor(Int, p.doping*p.N)
+        @show Nh_doped
         # put these holes on the px oxygen orbitals, spaced evenly apart 
-        spacing = 3*floor(Int,p.N/Nh_doped) # factor of 3 to account for unit cell size
-        # find the first empty index 
-        ## NO!! THIS DOESNT WORK THIS WAY 
-        start_idx = findfirst(x -> x==emps, state_arr)
-        state_arr[start_idx:2*spacing:end] .= ups 
-        state_arr[start_idx+spacing:2*spacing:end] .= downs 
+        spacing = floor(Int,p.N/Nh_doped) # spacing between unit cells 
+        for (i,n) in enumerate(1:spacing:p.N)
+            idx = to_site_number(p.Ny, n, "px")
+            if isodd(i)
+                state_arr[idx] = ups
+            else
+                state_arr[idx] = downs
+            end
+        end
     end
 
     # NOTE: the QN of this state is preserved during DMRG
@@ -456,10 +463,11 @@ end
 function compute_all_equilibrium_correlations(dmrg_results::DMRGResults, 
                                             HM::ThreeBandModel, p::Parameters;
                                             buffer=1)
-    Nsites, Nx, Ny = p.Nsites, p.Nx, p.Ny
+    Nx, Ny = p.Nx, p.Ny
     ϕ = copy(dmrg_results.ground_state)
-    start = 4+(buffer-1)*3
-    stop = 3*Nx - 3 - (buffer-1)*3
+    Nsites = length(ϕ)
+    start = 4 + (buffer-1)*3 # discard buffer # of unit cells 
+    stop = 3*Nx - (buffer-1)*3 - 2 # discard the last rung and buffer # of unit cells
 
     # Compute the correlations for each row separately 
     lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
@@ -469,39 +477,41 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
     corrtypes = ["spin","charge","sSC","pSC","dSC"]
     corrs = []
     for corrtype in corrtypes
-        corr = zeros(Ny, 3*Nx)
+        corr = zeros(Ny, stop-start+1)
         # discard the first unit cell due to edge effects 
         for y in 1:Ny
-            if Ny ==1
-                indices = lattice_indices[y,start:stop]
-                corr[y,start:stop] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-            elseif y == 1
-                indices = lattice_indices[y,start:end]
-                corr[y,start:end] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-            elseif y == Ny
-                indices = lattice_indices[y,1:stop]
-                corr[y,1:stop] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-            else
-                indices = lattice_indices[y,:]
-                corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-            end
+            indices = lattice_indices[y,start:stop]
+            corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+            # if Ny == 1
+            #     indices = lattice_indices[y,start:stop]
+            #     corr[y,start:stop] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+            # elseif y == 1
+            #     indices = lattice_indices[y,start:Nx+2]
+            #     corr[y,start:Nx+2] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+            # elseif y == Ny
+            #     indices = lattice_indices[y,1:stop]
+            #     corr[y,1:stop] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+            # else
+            #     indices = lattice_indices[y,:]
+            #     corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+            # end
         end
         # Fill in the first 3 and last 3 elements by taking averages from the other ladders
-        if Ny > 1
-            corr[1,1:start-1] = mean(corr[2:end,1:start-1], dims=1)
-            corr[Ny,stop+1:end] = mean(corr[1:Ny-1,stop+1:end], dims=1)
-        else # we trim 
-            corr = corr[:, start:stop]
-        end
+        # if Ny > 1
+        #     corr[1,1:start-1] = mean(corr[2:end,1:start-1], dims=1)
+        #     corr[Ny,stop+1:end] = mean(corr[1:Ny-1,stop+1:end], dims=1)
+        # else # we trim 
+        #     corr = corr[:, start:stop]
+        # end
 
         push!(corrs,corr)
     end
-
-    if Ny > 1
-        return EquilibriumCorrelations(1, 3*Nx, corrs...)
-    else
-        return EquilibriumCorrelations(start, stop, corrs...)
-    end
+    return EquilibriumCorrelations(start, stop, corrs...)
+    # if Ny > 1
+    #     return EquilibriumCorrelations(1, 3*Nx, corrs...)
+    # else
+    #     return EquilibriumCorrelations(start, stop, corrs...)
+    # end
 end
 
 function equilibrium_correlations(ϕ::MPS, indices, corrtype::String,sites)

@@ -71,7 +71,7 @@ function get_defaults(lattice::LatticeCuprate)
             curvature_scalar=0.2,
             nodesize=1,
             nodeshape=:circle,
-            nodecolor=:blue,
+            nodecolor=:purple,
         )
     elseif lattice[1].type == "pxpy" 
         return (
@@ -79,7 +79,7 @@ function get_defaults(lattice::LatticeCuprate)
             curvature_scalar=-0.2,
             nodesize=1,
             nodeshape=:rect,
-            nodecolor=:red,
+            nodecolor=:orange,
         )
     end
 end

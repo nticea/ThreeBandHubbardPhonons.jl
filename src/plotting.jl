@@ -9,11 +9,10 @@ include(joinpath(@__DIR__,"model.jl"))
 
 function plot_charge_density(dmrg_results::DMRGResults)
     n = dmrg_results.charge_density'
-    nx, ny = size(n)
-    plot(1:length(n[1:3:end,:]), n[1:3:end,:], label="py")
-    plot!(1:length(n[2:3:end,:]), n[2:3:end,:], label="d")
-    plot!(1:length(n[3:3:end,:]), n[3:3:end,:], label="px")
-    #ylims!((0.2,2))
+    n = n[1:end-2,:] # remove the last rung
+    plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
+    plot!(1:length(n[2:3:end,1]), n[2:3:end,:], label="d")
+    plot!(1:length(n[3:3:end,1]), n[3:3:end,:], label="px")
     ylabel!("⟨n⟩")
     xlabel!("Site")
     title!("Electron density")
@@ -21,10 +20,10 @@ end
 
 function plot_phonon_density(dmrg_results::DMRGResults; ylims=nothing)
     n = dmrg_results.phonon_density
-    nx, ny = size(n)
-    plot(1:length(n[1:3:end,:]), n[1:3:end,:], label="py")
-    plot!(1:length(n[2:3:end,:]), n[2:3:end,:], label="d")
-    plot!(1:length(n[3:3:end,:]), n[3:3:end,:], label="px")
+    n = n[1:end-2,:] # remove the last rung
+    plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
+    plot!(1:length(n[2:3:end,1]), n[2:3:end,:], label="d")
+    plot!(1:length(n[3:3:end,1]), n[3:3:end,:], label="px")
     if !isnothing(ylims)
         ylims!((ylim[0],ylim[1]))
     end
@@ -35,10 +34,10 @@ end
 
 function plot_spin_density(dmrg_results::DMRGResults; ylims=nothing)
     n = dmrg_results.spin_density'
-    nx, ny = size(n)
-    plot(1:length(n[1:3:end,:]), n[1:3:end,:], label="py")
-    plot!(1:length(n[2:3:end,:]), n[2:3:end,:], label="d")
-    plot!(1:length(n[3:3:end,:]), n[3:3:end,:], label="px")
+    n = n[1:end-2,:] # remove the last rung
+    plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
+    plot!(1:length(n[2:3:end,1]), n[2:3:end,:], label="d")
+    plot!(1:length(n[3:3:end,1]), n[3:3:end,:], label="px")
     if !isnothing(ylims)
         ylims!((ylim[0],ylim[1]))
     end

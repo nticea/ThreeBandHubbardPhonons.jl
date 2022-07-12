@@ -13,6 +13,20 @@ function to_site_number(Ny::Int, x::Int,
     end
 end
 
+"""
+    Same as above, but it takes you from a unit cell (n, not x and y coordinates) to an MPS site 
+""" 
+function to_site_number(Ny::Int, n::Int, type::String)
+    y = n%Ny
+    if y==0
+        x = fld(n, Ny)
+        y = Ny
+    else 
+        x = fld(n, Ny) + 1
+    end
+    return to_site_number(Ny, x, y, type)
+end
+
 struct LatticeBondCuprate
     s1::Int
     s2::Int
@@ -68,9 +82,7 @@ by specifying the keyword argument
 function OxygenCopper_lattice(Nx::Int, Ny::Int; kwargs...)::LatticeCuprate
   yperiodic = get(kwargs, :yperiodic, true)
   yperiodic = yperiodic && (Ny > 1)
-  Nbond = 4*(Nx-2)*(Ny-2) + 4*(Nx-1) + 4*(Ny-2) + 3*(Nx-1) + 3*(Ny-1) + 2 + (yperiodic ? Nx : 0)
-  latt = LatticeCuprate(undef, Nbond)
-  b = 0
+  latt = LatticeBondCuprate[]
 
   for x in 1:Nx
     for y in 1:Ny
@@ -79,28 +91,53 @@ function OxygenCopper_lattice(Nx::Int, Ny::Int; kwargs...)::LatticeCuprate
 
         # Add a pd bond to the right 
         n2 = to_site_number(Ny, x, y, "px")
-        latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, y, -1, "dpx")
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, -1, "dpx"))
 
         # Add a pd bond to the left
         if x>1
             n2 = to_site_number(Ny, x-1, y, "px")
-            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x-1, y, 1, "dpx")
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x-1, y, 1, "dpx"))
         end
 
         # Add a pd bond above
         n2 = to_site_number(Ny, x, y, "py")
-        latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, y, 1, "dpy")
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, 1, "dpy"))
 
         # Add a pd bond below
         if y>1
             n2 = to_site_number(Ny, x, y-1, "py")
-            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, y-1, -1, "dpy")
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y-1, -1, "dpy"))
         elseif yperiodic
             n2 = to_site_number(Ny, x, Ny, "py")
-            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, Ny, -1, "dpy")
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x, Ny, -1, "dpy"))
         end
     end
   end
+
+  # Add another rung
+  for y in 1:Ny
+    x = Nx+1
+    # The central site 
+    n1 = to_site_number(Ny, x, y, "d")
+
+    # Add bond to the left
+    n2 = to_site_number(Ny, x-1, y, "px")
+    push!(latt,LatticeBondCuprate(n1, n2, x, y, x-1, y, 1, "dpx"))
+
+    # Add a pd bond above
+    n2 = to_site_number(Ny, x, y, "py")
+    push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, 1, "dpy"))
+
+    # Add a pd bond below
+    if y>1
+        n2 = to_site_number(Ny, x, y-1, "py")
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y-1, -1, "dpy"))
+    elseif yperiodic
+        n2 = to_site_number(Ny, x, Ny, "py")
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, Ny, -1, "dpy"))
+    end
+  end
+
   return latt
 end
 
@@ -120,9 +157,7 @@ by specifying the keyword argument
 function OxygenOxygen_lattice(Nx::Int, Ny::Int; kwargs...)::LatticeCuprate
   yperiodic = get(kwargs, :yperiodic, true)
   yperiodic = yperiodic && (Ny > 1)
-  Nbond = 4*(Nx-1)*(Ny-1) + (Ny-1)*2 + (Nx-1)*2 + 1 + (yperiodic ? (Nx-1)*2+1 : 0)
-  latt = LatticeCuprate(undef, Nbond)
-  b = 0
+  latt = LatticeBondCuprate[]
 
   for x in 1:Nx
     for y in 1:Ny
@@ -131,35 +166,31 @@ function OxygenOxygen_lattice(Nx::Int, Ny::Int; kwargs...)::LatticeCuprate
 
         # Add a px-py bond to the upper left (in phase)
         n2 = to_site_number(Ny, x, y, "py")
-        latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, y, -1, "pxpy")
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, -1, "pxpy"))
 
         # Add a px-py bond to the upper right (out of phase)
-        if x<Nx
-            n2 = to_site_number(Ny, x+1, y, "py")
-            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x+1, y, 1, "pxpy")
-        end
+        n2 = to_site_number(Ny, x+1, y, "py")
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x+1, y, 1, "pxpy"))
 
         # Add a px-py to the lower left (out of phase)
         if y>1
             n2 = to_site_number(Ny, x, y-1, "py")
-            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, y-1, 1, "pxpy")
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y-1, 1, "pxpy"))
         elseif yperiodic
             n2 = to_site_number(Ny, x, Ny, "py")
-            latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x, Ny, 1, "pxpy")
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x, Ny, 1, "pxpy"))
         end
 
         # Add a px-py to the lower right (in phase)
-        if x<Nx
-            if y>1
-                n2 = to_site_number(Ny, x+1, y-1, "py")
-                latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x+1, y-1, -1, "pxpy")
-            elseif yperiodic
-                n2 = to_site_number(Ny, x+1, Ny, "py")
-                latt[b += 1] = LatticeBondCuprate(n1, n2, x, y, x+1, Ny, -1, "pxpy")
-            end
+        if y>1
+            n2 = to_site_number(Ny, x+1, y-1, "py")
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x+1, y-1, -1, "pxpy"))
+        elseif yperiodic
+            n2 = to_site_number(Ny, x+1, Ny, "py")
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x+1, Ny, -1, "pxpy"))
         end
-        
     end
+
   end
   return latt
 end
@@ -188,7 +219,7 @@ the unit cells are flattened along the x direction as (py , d , px)
 returns an array of shape (Ny x 3*Nx)
 """
 function reshape_into_lattice(a, Nx::Int, Ny::Int)
-    a_lattice = zeros(Ny, 3*Nx)
+    a_lattice = zeros(Ny, 3*Nx + 2)
     # Iterate through each of the cells 
     for y in 1:Ny
         s=0
@@ -200,6 +231,11 @@ function reshape_into_lattice(a, Nx::Int, Ny::Int)
             a_lattice[y, s+=1] = a[idx_d]
             a_lattice[y, s+=1] = a[idx_px]
         end
+        # take care of the extra rung 
+        idx_d = to_site_number(Ny, Nx+1, y, "d")
+        idx_py = to_site_number(Ny, Nx+1, y, "py")
+        a_lattice[y, s+=1] = a[idx_py]
+        a_lattice[y, s+=1] = a[idx_d]
     end
     return a_lattice 
 end
