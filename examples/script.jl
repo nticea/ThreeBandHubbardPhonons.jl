@@ -6,22 +6,21 @@ include(joinpath(@__DIR__,"../src/model.jl"))
 include(joinpath(@__DIR__,"../src/utilities.jl"))
 
 ## SAVING INFO ##
-DO_SAVE = true
-#INTERIM_SAVE = false
-MINIMAL_SAVE = true
+DO_SAVE = false
+MINIMAL_SAVE = false
 
 ## PARAMETERS ## 
 
 # Model 
-Nx=96
+Nx=4
 Ny=2
 yperiodic=true
 
 μ=0
 εd=0
 εp=3
-tpd=-1
-tpp=-0.5
+tpd=1
+tpp=0.5
 Upd=0
 Upp=3
 Udd=8

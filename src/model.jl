@@ -179,9 +179,18 @@ end
 
 function visualize_lattice(p::Parameters)
     Nx, Ny, yperiodic = p.Nx, p.Ny, p.yperiodic
-    pd_latt = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic)
-    pp_latt = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic)
-    visualize(pd_latt)
+    if yperiodic
+        pd_latt = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic)
+        pp_latt = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic)
+        visualize(pd_latt)
+        visualize!(pp_latt)
+    end
+    # even if we are working w periodic boundary conditions, the alternating plus/minus bonds
+    # are hidden along the y direction for the pd lattice bc of the periodic bonds, 
+    # so we plot it again on top just for visualization's sake 
+    pd_latt = OxygenCopper_lattice(Nx, Ny; yperiodic=false) 
+    pp_latt = OxygenOxygen_lattice(Nx, Ny; yperiodic=false)
+    visualize!(pd_latt)
     visualize!(pp_latt)
 end
 
