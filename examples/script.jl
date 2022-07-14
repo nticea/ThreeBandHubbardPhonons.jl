@@ -12,7 +12,7 @@ MINIMAL_SAVE = false
 ## PARAMETERS ## 
 
 # Model 
-Nx=4
+Nx=8
 Ny=2
 yperiodic=true
 
@@ -30,7 +30,7 @@ g0dd=0#0.1
 g1pd=0#0.1
 g1dp=0#0.1
 g1pp=0#0.1
-doping=0.125
+doping=0#0.125
 max_phonons=0#1 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 

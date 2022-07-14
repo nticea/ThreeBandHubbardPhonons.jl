@@ -322,6 +322,8 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
     # Make every other hole a down 
     inds_arr = findall(x -> x==ups, state_arr)[begin:2:end]
     state_arr[inds_arr] .= downs
+    # Last rung does not get any fermions
+    state_arr[end-2*Ny+1:end] .= emps
 
     # Account for doping
     if p.doping > 0
@@ -491,45 +493,57 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
         for y in 1:Ny
             indices = lattice_indices[y,start:stop]
             corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-            # if Ny == 1
-            #     indices = lattice_indices[y,start:stop]
-            #     corr[y,start:stop] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-            # elseif y == 1
-            #     indices = lattice_indices[y,start:Nx+2]
-            #     corr[y,start:Nx+2] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-            # elseif y == Ny
-            #     indices = lattice_indices[y,1:stop]
-            #     corr[y,1:stop] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-            # else
-            #     indices = lattice_indices[y,:]
-            #     corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-            # end
         end
-        # Fill in the first 3 and last 3 elements by taking averages from the other ladders
-        # if Ny > 1
-        #     corr[1,1:start-1] = mean(corr[2:end,1:start-1], dims=1)
-        #     corr[Ny,stop+1:end] = mean(corr[1:Ny-1,stop+1:end], dims=1)
-        # else # we trim 
-        #     corr = corr[:, start:stop]
-        # end
-
         push!(corrs,corr)
     end
     return EquilibriumCorrelations(start, stop, corrs...)
-    # if Ny > 1
-    #     return EquilibriumCorrelations(1, 3*Nx, corrs...)
-    # else
-    #     return EquilibriumCorrelations(start, stop, corrs...)
-    # end
+end
+
+function compute_equilibrium_correlation(dmrg_results::DMRGResults, 
+                                HM::ThreeBandModel, p::Parameters;
+                                corrtype::String="spin",
+                                buffer=1)
+    Nx, Ny = p.Nx, p.Ny
+    ϕ = copy(dmrg_results.ground_state)
+    Nsites = length(ϕ)
+    start = 4 + (buffer-1)*3 # discard buffer # of unit cells 
+    stop = 3*Nx - (buffer-1)*3 - 2 # discard the last rung and buffer # of unit cells
+
+    # Compute the correlations for each row separately 
+    lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
+    lattice_indices = convert.(Int, lattice_indices)
+
+    corr = zeros(Ny, stop-start+1)
+    for y in 1:Ny
+        indices = lattice_indices[y,start:stop]
+        corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+    end
+    return corr
 end
 
 function equilibrium_correlations(ϕ::MPS, indices, corrtype::String,sites)
     ϕ = copy(ϕ)
     j = indices[1]
     if corrtype=="spin"
-        return correlation_matrix(ϕ, "Sz", "Sz")[indices,j]
+        #return correlation_matrix(ϕ, "Sz", "Sz")[indices,j]
+        ψ = apply_onesite_operator(ϕ, "Sz", sites, j)
+        function compute_corr_spin(i::Int)
+            @show i
+            Szψ = apply_onesite_operator(ψ, "Sz", sites, i)
+            return inner(ϕ,Szψ)
+        end
+        return compute_corr_spin.(indices)
     elseif corrtype=="charge"
-        ninj = correlation_matrix(ϕ, "Ntot", "Ntot")[indices,j]
+        # ninj = correlation_matrix(ϕ, "Ntot", "Ntot")[indices,j]
+        # ni = expect(ϕ, "Ntot")
+        # nj = ni[j]
+        # return ninj - nj .* (ni[indices])
+        ψ = apply_onesite_operator(ϕ, "Ntot", sites, j)
+        function compute_corr_charge(i::Int)
+            Ntotψ = apply_onesite_operator(ψ, "Ntot", sites, i)
+            return inner(ϕ,Ntotψ)
+        end
+        ninj = compute_corr_charge.(indices)
         ni = expect(ϕ, "Ntot")
         nj = ni[j]
         return ninj - nj .* (ni[indices])
