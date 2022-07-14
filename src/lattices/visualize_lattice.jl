@@ -102,8 +102,6 @@ function visualize(lattice::LatticeCuprate; kwargs...)
     sign = get_sign(lattice)
     lattice_pos = lattice[sign .> 0]
     lattice_neg = lattice[sign .< 0]
-    @show length(lattice_pos)
-    @show length(lattice_neg)
 
     defaultargs = get_defaults(lattice_pos)
     graph = build_graph(lattice_pos)
@@ -125,8 +123,6 @@ function visualize!(lattice::LatticeCuprate; kwargs...)
     sign = get_sign(lattice)
     lattice_pos = lattice[sign .> 0]
     lattice_neg = lattice[sign .< 0]
-    @show length(lattice_pos)
-    @show length(lattice_neg)
 
     defaultargs = get_defaults(lattice_pos)
     graph = build_graph(lattice_pos)

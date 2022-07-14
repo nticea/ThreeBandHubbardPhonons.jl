@@ -209,6 +209,7 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     eph_coefs = make_coefficients(Nx+1, Ny, g0dd, g0pp, g0pp)
     for n in 1:Nsites
         # chemical potential term
+        # NOTE: MAYBE THIS IS DOING UNNECESSARY WORK -- add Δ term only to px/py
         ampo .+= μ_coefs[n], "Ntot", n
         # on-site repulsion
         ampo .+= U_coefs[n], "Nupdn", n
@@ -257,11 +258,6 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
             ampo .+= g1pp, "Bdag+B", b.s1, "Ntot", b.s2
         end
     end
-
-    # coefs = [real(a.args[1]) for a in ampo]
-    # @show sum(coefs) 
-    # coefs_counts = [(i, count(==(i), coefs)) for i in unique(coefs)]
-    # @show coefs_counts
 
     return MPO(ampo,sites)
 end
@@ -488,6 +484,7 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
     corrtypes = ["spin","charge","sSC","pSC","dSC"]
     corrs = []
     for corrtype in corrtypes
+        println("Computing ", corrtype, " correlation")
         corr = zeros(Ny, stop-start+1)
         # discard the first unit cell due to edge effects 
         for y in 1:Ny
@@ -528,7 +525,6 @@ function equilibrium_correlations(ϕ::MPS, indices, corrtype::String,sites)
         #return correlation_matrix(ϕ, "Sz", "Sz")[indices,j]
         ψ = apply_onesite_operator(ϕ, "Sz", sites, j)
         function compute_corr_spin(i::Int)
-            @show i
             Szψ = apply_onesite_operator(ψ, "Sz", sites, i)
             return inner(ϕ,Szψ)
         end
