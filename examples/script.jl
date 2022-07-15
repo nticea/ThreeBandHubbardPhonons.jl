@@ -7,12 +7,12 @@ include(joinpath(@__DIR__,"../src/utilities.jl"))
 
 ## SAVING INFO ##
 DO_SAVE = false
-MINIMAL_SAVE = false
+MINIMAL_SAVE = true
 
 ## PARAMETERS ## 
 
 # Model 
-Nx=8
+Nx=96
 Ny=2
 yperiodic=true
 
@@ -30,13 +30,15 @@ g0dd=0#0.1
 g1pd=0#0.1
 g1dp=0#0.1
 g1pp=0#0.1
-doping=0#0.125
+doping=0.125
 max_phonons=0#1 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
 DMRG_numsweeps = 20
 DMRG_maxdim = 2048
-DMRG_cutoff = 1E-10 
+DMRG_cutoff = 1E-10
+DMRG_LBO = false
+max_lbo_dim = 12
 
 ## CODE ## 
 
@@ -58,7 +60,7 @@ params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, 
                     Upp=Upp, Udd=Udd, ω=ω, g0pp=g0pp, g0dd=g0dd, g1pd=g1pd, 
                     g1dp=g1dp, g1pp=g1pp, doping=doping, 
                     max_phonons=max_phonons, DMRG_numsweeps=DMRG_numsweeps,
-                    DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff)
+                    DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO)
 TBHModel = ThreeBandModel(params)
 if MINIMAL_SAVE
     save_structs(params, save_path_minimal)
@@ -69,7 +71,7 @@ if DO_SAVE
 end
 
 # Visualize the lattice
-visualize_lattice(params)
+# visualize_lattice(params)
 
 # Run DMRG
 println("Finding ground state...")

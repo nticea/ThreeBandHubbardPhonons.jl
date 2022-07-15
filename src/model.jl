@@ -3,6 +3,7 @@ using Statistics: mean
 include("lattices/cuprate_lattice.jl")
 include("sites/site_hubbholst.jl")
 include("lattices/visualize_lattice.jl")
+include("dmrg_lbo.jl")
 
 struct Parameters
     # Model 
@@ -356,9 +357,8 @@ function run_DMRG(HM::ThreeBandModel, p::Parameters; alg="divide_and_conquer")
     ϕ0 = initialize_wavefcn(HM,p)
     @show flux(ϕ0)
     if p.DMRG_LBO # If performing local basis optimization
-        @error "LBO not implemented yet"
-        # energy, ϕ, Rs = dmrg_lbo(HM.mpo, ϕ0, sweeps, alg=alg, LBO=true, 
-        #                             max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
+        energy, ϕ, Rs = dmrg_lbo(HM.mpo, ϕ0, sweeps, alg=alg, LBO=true, 
+                                    max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
     else
         energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
         Rs = nothing
