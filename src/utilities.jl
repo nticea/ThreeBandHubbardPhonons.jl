@@ -58,6 +58,27 @@ function save_structs(struc, path::String)
     end
 end
 
+function simple_save(struc, path::String)
+    function Name(arg)
+        string(arg)
+    end
+    fnames = fieldnames(typeof(struc))
+    for fn in fnames 
+        n = Name(fn)
+        d = getfield(struc, fn)
+
+        try 
+            h5open(path, "r+") do file
+                write(file, n, d)
+            end
+        catch
+            h5open(path, "w") do file
+                write(file, n, d) 
+            end
+        end
+    end
+end
+
 parse_numbers(s, delimiter) = parse(Float64, split(s, delimiter, keepempty=false)[end])
 
 function read_ITensor_vector(d, f, prefix, delimiter)
@@ -99,6 +120,14 @@ function load_tebd_correlations(loadpath::String)
     d = read(f)
     return TEBDResults(d["entropy"], d["self_overlap"],
                                 d["corrs"], nothing, nothing)
+end
+
+function load_dmrg_results_minimal(loadpath::String)
+    f = h5open(loadpath,"r")
+    d = read(f)
+    return DMRGResults(nothing, d["ground_state_energy"], 
+                            d["ground_state_entropy"], nothing,
+                            d["charge_density"], d["phonon_density"], d["spin_density"])
 end
 
 function load_structs(loadpath::String; load_gs=true, 

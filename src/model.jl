@@ -515,7 +515,7 @@ function compute_equilibrium_correlation(dmrg_results::DMRGResults,
         indices = lattice_indices[y,start:stop]
         corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
     end
-    return corr
+    return corr, start, stop
 end
 
 function equilibrium_correlations(ϕ::MPS, indices, corrtype::String,sites)

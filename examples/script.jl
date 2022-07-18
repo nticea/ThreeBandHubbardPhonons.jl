@@ -6,13 +6,13 @@ include(joinpath(@__DIR__,"../src/model.jl"))
 include(joinpath(@__DIR__,"../src/utilities.jl"))
 
 ## SAVING INFO ##
-DO_SAVE = false
-MINIMAL_SAVE = false
+DO_SAVE = true
+MINIMAL_SAVE = true
 
 ## PARAMETERS ## 
 
 # Model 
-Nx=96
+Nx=4
 Ny=2
 yperiodic=true
 
@@ -88,10 +88,52 @@ end
 
 # Equilibrium correlations
 println("Computing equilibrium correlations...")
-eq_corr = compute_all_equilibrium_correlations(dmrg_results, TBHModel, params)
-if MINIMAL_SAVE
-    save_structs(eq_corr, save_path_minimal)
-end
+
+# temporary code so that I can save everything
 if DO_SAVE
-    save_structs(eq_corr, save_path_full)
+    path = save_path
 end
+if MINIMAL_SAVE
+    path = save_path_minimal
+end
+
+spin_corr, start, stop = compute_equilibrium_correlation(dmrg_results, TBHModel, params; corrtype="spin")
+if DO_SAVE || MINIMAL_SAVE
+    h5open(path, "w") do file
+        write(file, "start", start)
+        write(file, "stop", stop)
+        write(file, "spin", spin_corr) 
+    end
+end
+charge_corr,_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params; corrtype="charge")
+if DO_SAVE || MINIMAL_SAVE
+    h5open(path, "w") do file
+        write(file, "charge", charge_corr) 
+    end
+end
+sSC_corr,_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params; corrtype="sSC")
+if DO_SAVE || MINIMAL_SAVE
+    h5open(path, "w") do file
+        write(file, "sSC", sSC_corr) 
+    end
+end
+pSC_corr,_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params; corrtype="pSC")
+if DO_SAVE || MINIMAL_SAVE
+    h5open(path, "w") do file
+        write(file, "pSC", pSC_corr) 
+    end
+end
+dSC_corr,_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params; corrtype="dSC")
+if DO_SAVE || MINIMAL_SAVE
+    h5open(path, "w") do file
+        write(file, "dSC", dSC_corr) 
+    end
+end
+
+#eq_corr = compute_all_equilibrium_correlations(dmrg_results, TBHModel, params)
+# if MINIMAL_SAVE
+#     save_structs(eq_corr, save_path_minimal)
+# end
+# if DO_SAVE
+#     save_structs(eq_corr, save_path_full)
+# end
