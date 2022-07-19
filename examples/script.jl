@@ -91,7 +91,7 @@ println("Computing equilibrium correlations...")
 
 # temporary code so that I can save everything
 if DO_SAVE
-    path = save_path
+    path = save_path_full
 end
 if MINIMAL_SAVE
     path = save_path_minimal
