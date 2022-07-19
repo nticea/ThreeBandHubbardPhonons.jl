@@ -12,7 +12,7 @@ MINIMAL_SAVE = true
 ## PARAMETERS ## 
 
 # Model 
-Nx=4
+Nx=30
 Ny=2
 yperiodic=true
 
