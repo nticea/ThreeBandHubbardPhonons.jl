@@ -12,7 +12,7 @@ MINIMAL_SAVE = true
 ## PARAMETERS ## 
 
 # Model 
-Nx=30
+Nx=20
 Ny=2
 yperiodic=true
 
@@ -30,11 +30,11 @@ g0dd=0#0.1
 g1pd=0#0.1
 g1dp=0#0.1
 g1pp=0#0.1
-doping=0.125
+doping=0#0.125
 max_phonons=0 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
-DMRG_numsweeps = 20
+DMRG_numsweeps = 50
 DMRG_maxdim = 2048
 DMRG_cutoff = 1E-10
 DMRG_LBO = false
@@ -130,6 +130,7 @@ if DO_SAVE || MINIMAL_SAVE
     end
 end
 
+eq_corr = EquilibriumCorrelations(start, stop, spin_corr, charge_corr, sSC_corr, pSC_corr, dSC_corr)
 #eq_corr = compute_all_equilibrium_correlations(dmrg_results, TBHModel, params)
 # if MINIMAL_SAVE
 #     save_structs(eq_corr, save_path_minimal)
