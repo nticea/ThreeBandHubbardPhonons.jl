@@ -59,16 +59,20 @@ struct ThreeBandModel
 end
 
 struct DMRGResults
-    ground_state
-    ground_state_energy
-    ground_state_entropy 
+    nsweep::Int
+    maxdim::Vector{Int}
+    cutoff::Vector{Float64}
+    noise::Vector{Float64}
+    ground_state::MPS
+    ground_state_energy::Real
+    ground_state_entropy::Real 
     optimized_basis
     charge_density
     phonon_density
     spin_density
 end
 
-struct EquilibriumCorrelations
+mutable struct EquilibriumCorrelations
     start
     stop
     spin
@@ -176,6 +180,13 @@ function parameters(;Nx::Int, Ny::Int,
     
 end
 
+function are_equal(p1::Parameters, p2::Parameters)
+    fnames = fieldnames(typeof(p1))
+    for fn in fnames 
+        @assert getfield(p1, fn)==getfield(p2, fn)
+    end
+end
+
 ## LATTICE ##
 
 function visualize_lattice(p::Parameters)
@@ -273,6 +284,11 @@ function ThreeBandModel(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64
     ThreeBandModel(sites, H, gates)
 end
 
+function ThreeBandModel(p::Parameters, d::DMRGResults)
+    sites = siteinds(d.ground_state)
+    return ThreeBandModel(p, sites)
+end
+
 """
     ThreeBandModel(p::Parameters)
 Make a three-band Hubbard model with phonons given a set of input parameters 
@@ -347,21 +363,71 @@ function ladder_expectation(ϕ::MPS, opname::String, p::Parameters)
     return reshape_into_lattice(density1D, p.Nx, p.Ny)
 end
 
-function run_DMRG(HM::ThreeBandModel, p::Parameters; alg="divide_and_conquer")
-    # Set DMRG params
+function get_sweeps(p::Parameters, DMRG_numsweeps_per_save::Int)
+    # Set sweep params
     sweeps = Sweeps(p.DMRG_numsweeps)
     setnoise!(sweeps, p.DMRG_noise...) # Very important to use noise for this model
     setmaxdim!(sweeps, p.DMRG_maxdim...)
-    setcutoff!(sweeps, p.DMRG_cutoff...) 
+    setcutoff!(sweeps, p.DMRG_cutoff...)
+    nsweep = p.DMRG_numsweeps
+    noise = sweeps.noise
+    maxdim = sweeps.maxdim
+    cutoff = sweeps.cutoff 
+
+    if !isnothing(DMRG_numsweeps_per_save)
+        sweeps = Sweeps(DMRG_numsweeps_per_save)
+        setnoise!(sweeps, noise[1:DMRG_numsweeps_per_save]...)
+        setmaxdim!(sweeps, maxdim[1:DMRG_numsweeps_per_save]...)
+        setcutoff!(sweeps, cutoff[1:DMRG_numsweeps_per_save]...)
+        nsweep = DMRG_numsweeps_per_save
+        noise = noise[DMRG_numsweeps_per_save:end]
+        maxdim = maxdim[DMRG_numsweeps_per_save:end]
+        cutoff = cutoff[DMRG_numsweeps_per_save:end]
+    end
+
+    return sweeps, nsweep, noise, maxdim, cutoff 
+end
+
+function get_sweeps(d::DMRGResults, DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing)
+    nsweep, noise, maxdim, cutoff = d.nsweep, d.noise, d.maxdim, d.cutoff
+
+    if length(noise) > DMRG_numsweeps_per_save 
+        if !isnothing(DMRG_numsweeps_per_save)
+            sweeps = Sweeps(DMRG_numsweeps_per_save)
+            setnoise!(sweeps, noise[1:DMRG_numsweeps_per_save]...)
+            setmaxdim!(sweeps, maxdim[1:DMRG_numsweeps_per_save]...)
+            setcutoff!(sweeps, cutoff[1:DMRG_numsweeps_per_save]...)
+            nsweep = DMRG_numsweeps_per_save
+            noise = noise[DMRG_numsweeps_per_save:end]
+            maxdim = maxdim[DMRG_numsweeps_per_save:end]
+            cutoff = cutoff[DMRG_numsweeps_per_save:end]
+        end
+    else
+        # Otherwise, we just continue using the same parameters as before, but we augment nsweep
+        sweeps = Sweeps(DMRG_numsweeps_per_save)
+        setnoise!(sweeps, noise...)
+        setmaxdim!(sweeps, maxdim...)
+        setcutoff!(sweeps, cutoff...)
+        nsweep += DMRG_numsweeps_per_save
+    end
+
+    return sweeps, nsweep, noise, maxdim, cutoff 
+end
+
+function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters; 
+                    DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, alg="divide_and_conquer")
+    # Set DMRG params
+    sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(dmrg_results, DMRG_numsweeps_per_save) 
     
-    ϕ0 = initialize_wavefcn(HM,p)
-    @show flux(ϕ0)
+    # Load in the last wavefunction 
+    ϕ0 = dmrg_results.ground_state
     if p.DMRG_LBO # If performing local basis optimization
+        @assert 1==0 "Need to load in the old Rs from a previous run"
         energy, ϕ, Rs = dmrg_lbo(HM.mpo, ϕ0, sweeps, alg=alg, LBO=true, 
                                     max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
     else
         energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
-        Rs = nothing
+        Rs = 0
     end
 
     # compute some quantities
@@ -374,8 +440,41 @@ function run_DMRG(HM::ThreeBandModel, p::Parameters; alg="divide_and_conquer")
         phonon_density = zeros(p.Nx, p.Ny)
     end
 
-    return DMRGResults(ϕ, energy, entropy, Rs, charge_density, 
-                            phonon_density, spin_density)
+    return DMRGResults(nsweep, maxdim, cutoff, noise, ϕ, energy, entropy, 
+                        Rs, charge_density, phonon_density, spin_density)
+end
+
+function run_DMRG(HM::ThreeBandModel, p::Parameters; 
+                    DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, 
+                    alg="divide_and_conquer")
+    
+    # Set DMRG params
+    sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(p, DMRG_numsweeps_per_save)
+
+    # Initialize the wavefunction 
+    ϕ0 = initialize_wavefcn(HM,p)
+    
+    # Run DMRG 
+    if p.DMRG_LBO # If performing local basis optimization
+        energy, ϕ, Rs = dmrg_lbo(HM.mpo, ϕ0, sweeps, alg=alg, LBO=true, 
+                                    max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
+    else
+        energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
+        Rs = 0
+    end
+
+    # compute some quantities
+    entropy = compute_entropy(ϕ, p.mid)
+    charge_density = ladder_expectation(ϕ, "Ntot", p)
+    spin_density = ladder_expectation(ϕ, "Sz", p)
+    if p.max_phonons > 0
+        phonon_density = ladder_expectation(ϕ, "Nb", p)
+    else
+        phonon_density = zeros(p.Nx, p.Ny)
+    end
+
+    return DMRGResults(nsweep, maxdim, cutoff, noise, ϕ, energy, entropy, 
+                        Rs, charge_density, phonon_density, spin_density)
 end
 
 ## CORRELATION FUNCTIONS ## 

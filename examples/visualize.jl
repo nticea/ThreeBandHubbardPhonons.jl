@@ -8,21 +8,11 @@ using ITensors
 using ITensors.HDF5
 
 # Load the results in 
-loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/2-7-18_11:32:35_4Nx_2Ny_minimal.h5"
-#loadpath = "/Users/nicole/sherlock/code/ThreeBandHubbardPhonons.jl/outputs/2-7-15_10:31:15_96Nx_2Ny_minimal.h5"
-
-# If loading in minimal results, there are no states 
-load_gs=false
-load_phi=false
-load_psi=false
+loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/4Nx_2Ny_3εp_1tpd_0.5tpp_0Upd_3Upp_8Udd_0doping.h5"
+#loadpath = "/Users/nicole/sherlock/code/ThreeBandHubbardPhonons.jl/outputs/2-7-19_13:17:21_20Nx_2Ny.h5"
 
 println("Loading data...")
-# params, TBHModel, dmrg_results, eq_corr = load_structs(loadpath, 
-#                                                         load_gs=load_gs, 
-#                                                         load_phi=load_phi, 
-#                                                         load_psi=load_psi)
-dmrg_results = load_dmrg_results_minimal(loadpath)
-eq_corr = load_equilibrium_correlations(loadpath)
+dmrg_results, eq_corr = load_results(loadpath)
 
 # Visualize things we want                                                        
 plot_equilibrium_correlations(eq_corr, "spin")
