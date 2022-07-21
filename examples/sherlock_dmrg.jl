@@ -8,7 +8,7 @@ include(joinpath(@__DIR__,"../src/utilities.jl"))
 ## PARAMETERS ## 
 
 # Model 
-Nx=4
+Nx=96
 Ny=2
 yperiodic=true
 
@@ -20,7 +20,7 @@ tpp=0.5
 Upd=0
 Upp=3
 Udd=8
-doping=0#0.125
+doping=0.125
 ω=0#0.5
 g0pp=0#0.1
 g0dd=0#0.1
@@ -30,7 +30,7 @@ g1pp=0#0.1
 max_phonons=0 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
-DMRG_numsweeps = 10 # total number of iterations 
+DMRG_numsweeps = 60 # total number of iterations 
 DMRG_maxdim = 2048
 DMRG_cutoff = 1E-10
 DMRG_LBO = false
