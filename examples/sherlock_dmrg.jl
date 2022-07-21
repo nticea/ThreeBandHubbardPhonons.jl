@@ -110,17 +110,17 @@ global eq_corr.charge = charge_corr
 save_structs(eq_corr, save_path)
 println("Saving charge correlation...")
 
-sSC_corr_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params, corrtype="sSC")
+sSC_corr,_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params, corrtype="sSC")
 global eq_corr.sSC = sSC_corr 
 save_structs(eq_corr, save_path)
 println("Saving sSC correlation...")
 
-pSC_corr_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params, corrtype="pSC")
+pSC_corr,_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params, corrtype="pSC")
 global eq_corr.pSC = pSC_corr 
 save_structs(eq_corr, save_path)
 println("Saving pSC correlation...")
 
-dSC_corr_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params, corrtype="dSC")
+dSC_corr,_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params, corrtype="dSC")
 global eq_corr.dSC = dSC_corr 
 save_structs(eq_corr, save_path)
 println("Saving dSC correlation...")
