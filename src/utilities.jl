@@ -156,11 +156,9 @@ end
 
 function load_results(loadpath::String)
     f = h5open(loadpath,"r")
-    ground_state = read(f, "ground_state", MPS)
     d = read(f)
-    dmrg_results = DMRGResults(d["nsweep"], d["maxdim"], d["cutoff"],d["noise"], 
-                            ground_state, d["ground_state_energy"], 
-                            d["ground_state_entropy"], 0,
+    dmrg_results = DMRGResultsMinimal(d["ground_state_energy"], 
+                            d["ground_state_entropy"],
                             d["charge_density"], d["phonon_density"], d["spin_density"])
 
     eq_corr = EquilibriumCorrelations(d["start"], d["stop"], d["spin"], d["charge"], 

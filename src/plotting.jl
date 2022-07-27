@@ -7,7 +7,7 @@ include(joinpath(@__DIR__,"model.jl"))
 
 ## EQUILIBRIUM CORRELATIONS ##
 
-function plot_charge_density(dmrg_results::DMRGResults)
+function plot_charge_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal})
     n = dmrg_results.charge_density'
     n = n[1:end-2,:] # remove the last rung
     plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
@@ -18,7 +18,7 @@ function plot_charge_density(dmrg_results::DMRGResults)
     title!("Electron density")
 end
 
-function plot_phonon_density(dmrg_results::DMRGResults; ylims=nothing)
+function plot_phonon_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}; ylims=nothing)
     n = dmrg_results.phonon_density
     n = n[1:end-2,:] # remove the last rung
     plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
@@ -32,7 +32,7 @@ function plot_phonon_density(dmrg_results::DMRGResults; ylims=nothing)
     title!("Phonon density")
 end
 
-function plot_spin_density(dmrg_results::DMRGResults; ylims=nothing)
+function plot_spin_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}; ylims=nothing)
     n = dmrg_results.spin_density'
     n = n[1:end-2,:] # remove the last rung
     plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
