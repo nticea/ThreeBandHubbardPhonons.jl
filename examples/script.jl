@@ -5,9 +5,6 @@ using Dates
 include(joinpath(@__DIR__,"../src/model.jl"))
 include(joinpath(@__DIR__,"../src/utilities.jl"))
 
-## SAVING INFO ##
-DO_SAVE = false
-
 ## PARAMETERS ## 
 
 # Model 
@@ -34,25 +31,46 @@ max_phonons=0 # (n+1)*4 = total site dimension
 
 # DMRG parameters 
 DMRG_numsweeps = 10 # total number of iterations 
+DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
 DMRG_maxdim = 2048
 DMRG_cutoff = 1E-10
 DMRG_LBO = false
 max_lbo_dim = 12
 
-# Initialize 
-println("Initializing...")
-params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, tpp=tpp, Upd=Upd, 
-                    Upp=Upp, Udd=Udd, ω=ω, g0pp=g0pp, g0dd=g0dd, g1pd=g1pd, 
-                    g1dp=g1dp, g1pp=g1pp, doping=doping, 
-                    max_phonons=max_phonons, DMRG_numsweeps=DMRG_numsweeps,
-                    DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO)
-# The Hamiltonian MPO 
-TBHModel = ThreeBandModel(params)
+output_path = "dmrg_out.log"
 
-# Run DMRG
-println("Finding ground state...")
-dmrg_results = run_DMRG(TBHModel, params, alg="divide_and_conquer")
+# Create the output file 
+try
+    open(output_path, "a") do s
+        println(s, "Appending to file...")
+    end
+catch
+    touch(output_path)
+    open(output_path, "w") do s
+        println(s, "Creating a new file...")
+    end
+end
 
-# Equilibrium correlations
-println("Computing equilibrium correlations...")
-eq_corr = compute_all_equilibrium_correlations(dmrg_results, TBHModel, params)
+open(output_path, "a") do io
+    redirect_stdout(io) do 
+
+        # Initialize 
+        println("Initializing...")
+        params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, tpp=tpp, Upd=Upd, 
+                            Upp=Upp, Udd=Udd, ω=ω, g0pp=g0pp, g0dd=g0dd, g1pd=g1pd, 
+                            g1dp=g1dp, g1pp=g1pp, doping=doping, 
+                            max_phonons=max_phonons, DMRG_numsweeps=DMRG_numsweeps,
+                            DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO)
+        # The Hamiltonian MPO 
+        TBHModel = ThreeBandModel(params)
+
+        # Run DMRG
+        println("Finding ground state...")
+        dmrg_results = run_DMRG(TBHModel, params, DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer")
+
+        # Equilibrium correlations
+        println("Computing equilibrium correlations...")
+        eq_corr = compute_all_equilibrium_correlations(dmrg_results, TBHModel, params)
+
+    end
+end
