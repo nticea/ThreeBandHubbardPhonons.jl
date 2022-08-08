@@ -37,7 +37,7 @@ DMRG_cutoff = 1E-10
 ## SAVE OUT INFO ##
 DMRG_numsweeps_per_save = 5 # If don't want to save regularly, just set this to DMRG_numsweeps
 param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Upd)Upd_$(Upp)Upp_$(Udd)Udd_$(doping)doping"
-save_path = joinpath(@__DIR__,param_stamp*".h5")
+save_path = joinpath("/scratch/users/nticea",param_stamp*".h5") #joinpath(@__DIR__,param_stamp*".h5")
 results_save_path = joinpath(@__DIR__,param_stamp*"_results.h5")
 
 ## CODE ## 
