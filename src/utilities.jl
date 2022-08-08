@@ -137,9 +137,13 @@ function load_params(loadpath::String)
             d["TEBD_cutoff"], d["TEBD_maxdim"], d["TEBD_LBO"])
 end
 
-function load_dmrg_results(loadpath::String)
+function load_dmrg_results(loadpath::String; load_gs::Bool=true)
     f = h5open(loadpath,"r")
-    ground_state = read(f, "ground_state", MPS)
+    if load_gs
+        ground_state = read(f, "ground_state", MPS)
+    else
+        ground_state = nothing
+    end
     d = read(f)
     return DMRGResults(d["nsweep"], d["maxdim"], d["cutoff"],d["noise"], 
                             ground_state, d["ground_state_energy"], 
@@ -157,6 +161,7 @@ end
 function load_results(loadpath::String)
     f = h5open(loadpath,"r")
     d = read(f)
+    @show keys(d)
     dmrg_results = DMRGResultsMinimal(d["ground_state_energy"], 
                             d["ground_state_entropy"],
                             d["charge_density"], d["phonon_density"], d["spin_density"])
@@ -174,14 +179,12 @@ end
 #                                 d["corrs"], nothing, nothing)
 # end
 
-# function load_dmrg_results_minimal(loadpath::String)
-#     f = h5open(loadpath,"r")
-#     d = read(f)
-#     @show keys(d)
-#     return DMRGResults(nothing, d["ground_state_energy"], 
-#                             d["ground_state_entropy"], nothing,
-#                             d["charge_density"], d["phonon_density"], d["spin_density"])
-# end
+function load_dmrg_results_minimal(loadpath::String)
+    f = h5open(loadpath,"r")
+    d = read(f)
+    return DMRGResultsMinimal(d["ground_state_energy"], d["ground_state_entropy"], 
+                            d["charge_density"], d["phonon_density"], d["spin_density"])
+end
 
 # function load_structs(loadpath::String; load_gs=true, 
 #                         load_phi=true, load_psi=true)

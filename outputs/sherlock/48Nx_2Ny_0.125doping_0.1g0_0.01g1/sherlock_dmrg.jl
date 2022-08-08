@@ -24,9 +24,9 @@ doping=0.125
 ω=0.5
 g0pp=0.1
 g0dd=0.1
-g1pd=0.01
-g1dp=0.01
-g1pp=0.01
+g1pd=0
+g1dp=0
+g1pp=0
 max_phonons=4 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
@@ -36,7 +36,7 @@ DMRG_cutoff = 1E-10
 
 ## SAVE OUT INFO ##
 DMRG_numsweeps_per_save = 1 # If don't want to save regularly, just set this to DMRG_numsweeps
-param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Upd)Upd_$(Upp)Upp_$(Udd)Udd_$(doping)doping"
+param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Upd)Upd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ω)ω_$(g0pp)g0pp_$(g0dd)g0dd_$(g1pd)g1pd_$(g1dp)g1dp_$(g1pp)g1pp"
 save_path = joinpath("/scratch/users/nticea",param_stamp*".h5") #joinpath(@__DIR__,param_stamp*".h5")
 results_save_path = joinpath(@__DIR__,param_stamp*"_results.h5")
 
