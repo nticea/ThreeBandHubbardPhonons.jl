@@ -24,9 +24,9 @@ doping=0.125
 ω=0.5
 g0pp=0.1
 g0dd=0.1
-g1pd=0.01
-g1dp=0.01
-g1pp=0.01
+g1pd=0
+g1dp=0
+g1pp=0
 max_phonons=4 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
