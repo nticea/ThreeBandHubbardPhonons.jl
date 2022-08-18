@@ -10,16 +10,16 @@ function dmrg_run(Nx, Ny, yperiodic, μ, εd, εp,
     output_path = joinpath(@__DIR__,param_stamp*"_out.log")
 
     # Create the output file 
-    try
-        open(output_path, "a") do s
-            println(s, "Appending to file...")
-        end
-    catch
-        touch(output_path)
-        open(output_path, "w") do s
-            println(s, "Creating a new file...")
-        end
-    end
+    # try
+    #     open(output_path, "a") do s
+    #         println(s, "Appending to file...")
+    #     end
+    # catch
+    #     touch(output_path)
+    #     open(output_path, "w") do s
+    #         println(s, "Creating a new file...")
+    #     end
+    # end
 
     ## CODE ## 
     global params
@@ -28,64 +28,62 @@ function dmrg_run(Nx, Ny, yperiodic, μ, εd, εp,
     global eq_corr
 
     # Write everything to my output file 
-    open(output_path, "a") do io
-        redirect_stdout(io) do 
+    # open(output_path, "a") do io
+    #     redirect_stdout(io) do 
 
-            try
-                global params = load_params(save_path)
-                println("Loading parameters from ", save_path)
-            catch e
-                @show e
-                global params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, 
-                    tpd=tpd, tpp=tpp, Upd=Upd, 
-                    Upp=Upp, Udd=Udd, ω=ω, g0pp=g0pp, g0dd=g0dd, g1pd=g1pd, 
-                    g1dp=g1dp, g1pp=g1pp, doping=doping, 
-                    max_phonons=max_phonons, DMRG_numsweeps=DMRG_numsweeps,
-                    DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff)
-                println("Initializing parameters...")
-                save_structs(params, save_path)
-                println("Saving parameters to ", save_path)
-            end
+    try
+        global params = load_params(save_path)
+        println("Loading parameters from ", save_path)
+    catch 
+        global params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, 
+            tpd=tpd, tpp=tpp, Upd=Upd, 
+            Upp=Upp, Udd=Udd, ω=ω, g0pp=g0pp, g0dd=g0dd, g1pd=g1pd, 
+            g1dp=g1dp, g1pp=g1pp, doping=doping, 
+            max_phonons=max_phonons, DMRG_numsweeps=DMRG_numsweeps,
+            DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff)
+        println("Initializing parameters...")
+        save_structs(params, save_path)
+        println("Saving parameters to ", save_path)
+    end
 
-            # Initialize the model (sites and MPO)
-            global TBHModel = ThreeBandModel(params)
+    # Initialize the model (sites and MPO)
+    global TBHModel = ThreeBandModel(params)
 
-            # Do the first DMRG run        
-            try 
-                println("Loading DMRG results")
-                global dmrg_results = load_dmrg_results(save_path)
-                global TBHModel = ThreeBandModel(params, dmrg_results) # load in the correct sites if we already have a wavefcn
-            catch e
-                @show e
-                println("Running DMRG...")
-                global dmrg_results = run_DMRG(TBHModel, params, 
-                                            DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer")
-                dmrg_results_minimal = DMRGResultsMinimal(dmrg_results.ground_state_energy,
-                                            dmrg_results.ground_state_entropy, 
-                                            dmrg_results.charge_density,
-                                            dmrg_results.phonon_density,
-                                            dmrg_results.spin_density)
-                save_structs(dmrg_results, save_path)
-                save_structs(dmrg_results_minimal, results_save_path)
-                println("Interim DMRG save")
-            end
+    # Do the first DMRG run        
+    try 
+        println("Loading DMRG results")
+        global dmrg_results = load_dmrg_results(save_path)
+        global TBHModel = ThreeBandModel(params, dmrg_results) # load in the correct sites if we already have a wavefcn
+    catch 
+        println("Running DMRG...")
+        global dmrg_results = run_DMRG(TBHModel, params, 
+                                    DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer")
+        dmrg_results_minimal = DMRGResultsMinimal(dmrg_results.ground_state_energy,
+                                    dmrg_results.ground_state_entropy, 
+                                    dmrg_results.charge_density,
+                                    dmrg_results.phonon_density,
+                                    dmrg_results.spin_density)
+        save_structs(dmrg_results, save_path)
+        save_structs(dmrg_results_minimal, results_save_path)
+        println("Interim DMRG save")
+    end
 
-            # Do the rest of the DMRG runs 
-            for _ in 1:floor(Int, DMRG_numsweeps/DMRG_numsweeps_per_save)
-                global dmrg_results = run_DMRG(dmrg_results, TBHModel, params, 
-                                            DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer")
-                dmrg_results_minimal = DMRGResultsMinimal(dmrg_results.ground_state_energy,
-                                            dmrg_results.ground_state_entropy, 
-                                            dmrg_results.charge_density,
-                                            dmrg_results.phonon_density,
-                                            dmrg_results.spin_density)
-                save_structs(dmrg_results, save_path)
-                save_structs(dmrg_results_minimal, results_save_path)
-                println("Interim DMRG save")
-            end
-        end
+    # Do the rest of the DMRG runs 
+    for _ in 1:floor(Int, DMRG_numsweeps/DMRG_numsweeps_per_save)
+        global dmrg_results = run_DMRG(dmrg_results, TBHModel, params, 
+                                    DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer")
+        dmrg_results_minimal = DMRGResultsMinimal(dmrg_results.ground_state_energy,
+                                    dmrg_results.ground_state_entropy, 
+                                    dmrg_results.charge_density,
+                                    dmrg_results.phonon_density,
+                                    dmrg_results.spin_density)
+        save_structs(dmrg_results, save_path)
+        save_structs(dmrg_results_minimal, results_save_path)
+        println("Interim DMRG save")
     end
 end
+#     end
+# end
 
 function correlations_run(Nx, Ny, yperiodic, μ, εd, εp, 
                             tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
