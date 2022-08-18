@@ -595,21 +595,67 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
     return EquilibriumCorrelations(start, stop, corrs...)
 end
 
-function compute_equilibrium_bond_correlations(dmrg_results::DMRGResults, 
+function compute_equilibrium_pairfield_correlations(dmrg_results::DMRGResults, 
                                                 HM::ThreeBandModel, p::Parameters)
 
-    compute_equilibrium_bond_correlation(dmrg_results, HM, p, "d-d", "sSC")
-    compute_equilibrium_bond_correlation(dmrg_results, HM, p, "d-px", "sSC")
-    compute_equilibrium_bond_correlation(dmrg_results, HM, p, "d-py", "sSC")
-    compute_equilibrium_bond_correlation(dmrg_results, HM, p, "px-px", "sSC")
-    compute_equilibrium_bond_correlation(dmrg_results, HM, p, "px-py", "sSC")
-    compute_equilibrium_bond_correlation(dmrg_results, HM, p, "py-py", "sSC")
+    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "sSC")
+    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dy-dy", "dy-dy", "sSC")
+    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dy-dy", "sSC")
+    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "d-px", "d-px", "sSC")
+    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "d-py", "d-py", "sSC")
+    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "px-py", "px-py", "sSC")
+end
+
+function get_bonds(bondtype::String; row=1)
+    if bondtype=="d-px" 
+        s1 = 2
+        s2 = 3
+        r1, r2 = row
+    elseif bondtype=="px-d"
+        s1 = 3
+        s2 = 2
+        r1, r2 = row
+    elseif bondtype=="dx-dx"
+        s1 = 2
+        s2 = 5
+        r1, r2 = row
+    elseif bondtype=="dy-dy"
+        s1, s2 = 2
+        r1 = 1
+        r2 = 2
+    elseif bondtype=="d-py"
+        s1 = 2
+        s2 = 1
+        r1, r2 = row
+    elseif bondtype=="py-d"
+        s1 = 1
+        s2 = 2
+        r1, r2 = row
+    elseif bondtype=="px-py"
+        s1 = 3
+        s2 = 1
+        r1, r2 = row
+    elseif bondtype=="py-px"
+        s1 = 1
+        s2 = 3
+        r1, r2 = row
+    else
+        @error "Bond type not recognized"
+        return nothing
+    end
+
+    refbond = (lattice_indices[r1, s1],lattice_indices[r2, s2])
+    sites_1 = lattice_indices[r1, s1:3:end] 
+    sites_2 = lattice_indices[r2, s2:3:end] 
+    bonds = [(sites_1[n], sites_2[n]) for n in 1:length(sites_1)]
+
+    return refbond, bonds
 end
 
 function compute_equilibrium_bond_correlation(dmrg_results::DMRGResults, 
                                                 HM::ThreeBandModel, p::Parameters,
-                                                bondtype::String, corrtype::String;
-                                                buffer=1)
+                                                bond1::String, bond2::String, SCtype::String;
+                                                buffer=1, row=1)
     Nx, Ny = p.Nx, p.Ny
     ϕ = copy(dmrg_results.ground_state)
     Nsites = length(ϕ)
@@ -621,67 +667,18 @@ function compute_equilibrium_bond_correlation(dmrg_results::DMRGResults,
     lattice_indices = convert.(Int, lattice_indices) 
     lattice_indices = lattice_indices[:,start:stop] 
 
-    # Iterate through the different types of bonds
-    if bondtype=="d-px" || bondtype=="px-d"
-        
-    elseif bondtype=="dx-dx"
-
-    elseif bondtype=="dy-dy"
-        
-    elseif bondtype=="d-py" || bondtype=="py-d"
-        
-    elseif bondtype=="px-px"
-        
-    elseif bondtype=="py-py"
-        
-    elseif bondtype=="px-py" || bondtype=="py-px"
-        
-    else
-        @error "Bond type not recognized"
-        return nothing
-    end
-
-    # Run the correlation 
-    if corrtype=="spins" || corrtype=="charge"
-
-    elseif corrtype=="sSC" || corrtype=="pSC" || corrtype=="dSC"
-
-    else
-        @error "Correlation type not recognized"
-        return nothing
-    end
-    
-    # if bondtype=="d-px" || bondtype=="px-d"
-    #     inds1 = lattice_indices[2:3:end,:] # the d sites
-    #     inds2 = lattice_indices[3:3:end,:] # the px sites 
-    # elseif bondtype=="d-d"
-    #     inds1 = lattice_indices[2:3:end,:] # the horizontal d sites 
-    #     inds2 = lattice_indices[2:3:end,:] # the horizontal d sites
-    #     # we must also do this vertically
-    # elseif bondtype=="d-py" || bondtype=="py-d"
-    #     inds1 = lattice_indices[1:3:end,:] 
-    #     inds2 = lattice_indices[2:3:end,:]
-    # elseif bondtype=="px-px"
-    #     inds1 = lattice_indices[3:3:end,:] 
-    #     inds2 = lattice_indices[3:3:end,:]
-    # elseif bondtype=="py-py"
-    #     inds1 = lattice_indices[1:3:end,:] 
-    #     inds2 = lattice_indices[1:3:end,:]
-    # elseif bondtype=="px-py" || bondtype=="py-px"
-    #     inds1 = lattice_indices[1:3:end,:]
-    #     inds2 = lattice_indices[3:3:end,:]
-    # end
-
     # Compute the equilibrium correlations within this chain 
-    corr = zeros(Ny, size(inds2)[1])
-    for y in 1:Ny
-        corr[y,:] = bond_correlation(ϕ, inds1[1,y], inds2[:,y], corrtype, HM.sites)
-    end
+    refbond, bonds = 
+    corr = bond_correlation(ϕ, )
+    
 
     return corr 
 end
 
-function bond_correlation(ϕ::MPS, j::Int, indices::Vector{Int}, corrtype::String, sites)
+function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)
+    
+    
+    
     if corrtype=="sSC"
         ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
         function compute_corr_sSC(i::Int)
