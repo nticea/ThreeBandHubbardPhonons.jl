@@ -1,8 +1,8 @@
 function dmrg_run(Nx, Ny, yperiodic, μ, εd, εp, 
                 tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
                 g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
-                DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save,
-                disk_save;
+                DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
+                disk_save=false,
                 dir_path=@__DIR__)
 
     param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Upd)Upd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ω)ω_$(g0pp)g0pp_$(g0dd)g0dd_$(g1pd)g1pd_$(g1dp)g1dp_$(g1pp)g1pp"

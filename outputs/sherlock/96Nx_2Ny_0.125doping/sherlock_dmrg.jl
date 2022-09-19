@@ -40,6 +40,6 @@ dir_path = "/scratch/users/nticea"
 dmrg_run(Nx, Ny, yperiodic, μ, εd, εp, 
         tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
         g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
-        DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save,
-        disk_save=true;
+        DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
+        disk_save=true,
         dir_path=dir_path)
