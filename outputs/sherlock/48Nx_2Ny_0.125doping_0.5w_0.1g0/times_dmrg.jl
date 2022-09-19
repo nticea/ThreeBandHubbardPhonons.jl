@@ -35,10 +35,11 @@ DMRG_maxdim = 2048
 DMRG_cutoff = 1E-10
 
 ## SAVE OUT INFO ##
-DMRG_numsweeps_per_save = 5 # If don't want to save regularly, just set this to DMRG_numsweeps
+DMRG_numsweeps_per_save = 1 # If don't want to save regularly, just set this to DMRG_numsweeps
 println("Running DMRG...")
 dmrg_run(Nx, Ny, yperiodic, μ, εd, εp, 
         tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
         g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
-        DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
+        DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save,
+        disk_save=true;
         dir_path=@__DIR__)

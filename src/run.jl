@@ -1,15 +1,16 @@
 function dmrg_run(Nx, Ny, yperiodic, μ, εd, εp, 
                 tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
                 g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
-                DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
+                DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save,
+                disk_save;
                 dir_path=@__DIR__)
 
     param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Upd)Upd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ω)ω_$(g0pp)g0pp_$(g0dd)g0dd_$(g1pd)g1pd_$(g1dp)g1dp_$(g1pp)g1pp"
     save_path = joinpath(dir_path,param_stamp*".h5")
     results_save_path = joinpath(@__DIR__,param_stamp*"_results.h5")
-    output_path = joinpath(@__DIR__,param_stamp*"_out.log")
 
     # Create the output file 
+    # output_path = joinpath(@__DIR__,param_stamp*"_out.log")
     # try
     #     open(output_path, "a") do s
     #         println(s, "Appending to file...")
@@ -57,7 +58,7 @@ function dmrg_run(Nx, Ny, yperiodic, μ, εd, εp,
     catch 
         println("Running DMRG...")
         global dmrg_results = run_DMRG(TBHModel, params, 
-                                    DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer")
+                                    DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer", disk_save=disk_save)
         dmrg_results_minimal = DMRGResultsMinimal(dmrg_results.ground_state_energy,
                                     dmrg_results.ground_state_entropy, 
                                     dmrg_results.charge_density,
@@ -71,7 +72,7 @@ function dmrg_run(Nx, Ny, yperiodic, μ, εd, εp,
     # Do the rest of the DMRG runs 
     for _ in 1:floor(Int, DMRG_numsweeps/DMRG_numsweeps_per_save)
         global dmrg_results = run_DMRG(dmrg_results, TBHModel, params, 
-                                    DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer")
+                                    DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer", disk_save=disk_save)
         dmrg_results_minimal = DMRGResultsMinimal(dmrg_results.ground_state_energy,
                                     dmrg_results.ground_state_entropy, 
                                     dmrg_results.charge_density,

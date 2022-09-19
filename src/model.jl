@@ -415,7 +415,8 @@ function get_sweeps(d::DMRGResults, DMRG_numsweeps_per_save::Union{Nothing,Int}=
 end
 
 function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters; 
-                    DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, alg="divide_and_conquer")
+                    DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, 
+                    alg="divide_and_conquer", disk_save=false)
     # Set DMRG params
     sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(dmrg_results, DMRG_numsweeps_per_save) 
     
@@ -426,7 +427,11 @@ function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters;
         energy, ϕ, Rs = dmrg_lbo(HM.mpo, ϕ0, sweeps, alg=alg, LBO=true, 
                                     max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
     else
-        energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
+        if disk_save
+            energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg, write_when_maxdim_exceeds=p.DMRG_maxdim)
+        else
+            energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
+        end
         Rs = 0
     end
 
@@ -446,7 +451,7 @@ end
 
 function run_DMRG(HM::ThreeBandModel, p::Parameters; 
                     DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, 
-                    alg="divide_and_conquer")
+                    alg="divide_and_conquer", disk_save=false)
     
     # Set DMRG params
     sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(p, DMRG_numsweeps_per_save)
@@ -459,7 +464,11 @@ function run_DMRG(HM::ThreeBandModel, p::Parameters;
         energy, ϕ, Rs = dmrg_lbo(HM.mpo, ϕ0, sweeps, alg=alg, LBO=true, 
                                     max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
     else
-        energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
+        if disk_save
+            energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg, write_when_maxdim_exceeds=p.DMRG_maxdim)
+        else
+            energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
+        end
         Rs = 0
     end
 

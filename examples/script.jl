@@ -8,7 +8,7 @@ include(joinpath(@__DIR__,"../src/utilities.jl"))
 ## PARAMETERS ## 
 
 # Model 
-Nx=8
+Nx=4
 Ny=2
 yperiodic=true
 
@@ -30,7 +30,7 @@ g1pp=0#0.1
 max_phonons=0 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
-DMRG_numsweeps = 20 # total number of iterations 
+DMRG_numsweeps = 5 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
 DMRG_maxdim = 64
 DMRG_cutoff = 1E-10
@@ -49,7 +49,7 @@ TBHModel = ThreeBandModel(params)
 
 # Run DMRG
 println("Finding ground state...")
-dmrg_results = run_DMRG(TBHModel, params, DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer")
+dmrg_results = run_DMRG(TBHModel, params, DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer", disk_save=true)
 
 # Equilibrium correlations
 println("Computing equilibrium correlations...")
