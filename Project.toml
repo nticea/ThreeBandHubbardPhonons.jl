@@ -4,6 +4,8 @@ authors = ["nticea <nticea@stanford.edu>"]
 version = "0.1.0"
 
 [deps]
+BitBasis = "50ba71b6-fa0f-514d-ae9a-0916efc90dcf"
+Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 GraphRecipes = "bd48cda9-67a9-57be-86fa-5b3c104eda73"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"

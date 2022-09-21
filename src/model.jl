@@ -511,44 +511,70 @@ function apply_onesite_operator(ϕ::MPS, opname::String, sites, siteidx::Int)
     return apply_op(ϕ, op(opname,sites[siteidx]), siteidx)
 end
 
-function apply_twosite_operator(ϕ::MPS, opname::String, sites, siteidx::Int)
+function Π̂(sites, s1::Int, s2::Int)
+    # Π = 1/sqrt(2)*(op("Cup",sites[s1])*op("Cdn",sites[s2])
+    #                     + op("Cdn",sites[s1])*op("Cup",sites[s2]))
+
+    @assert s1 < s2 # ordering matters! these are fermions we're talking about
+
+    # First part 
+    Π1 = op("Cup",sites[s1])
+    for s in (s1+1):(s2-1)
+        Π1 *= op("F",sites[s])
+    end
+    Π1 *= op("Cdn",sites[s2])
+
+    # Second part 
+    Π2 = op("Cdn",sites[s1])
+    for s in (s1+1):(s2-1)
+        Π2 *= op("F",sites[s])
+    end
+    Π2 *= op("Cup",sites[s2])
+
+    # Take sum and normalize
+    Π = 1/sqrt(2)*(Π1 + Π2)
+end
+
+function Δ̂(sites, s1::Int, s2::Int)
+    # Δ = 1/sqrt(2)*(op("Cup",sites[s1])*op("Cdn",sites[s2])
+    #                         - op("Cdn",sites[s1])*op("Cup",sites[s2]))
+
+    @assert s1 < s2 # ordering matters! these are fermions we're talking about
+
+    # First part
+    Δ1 = op("Cup",sites[s1])
+    for s in (s1+1):(s2-1)
+        Δ1 *= op("F",sites[s])
+    end
+    Δ1 *= op("Cdn",sites[s2])
+
+    # Second part 
+    Δ2 = op("Cdn",sites[s1])
+    for s in (s1+1):(s2-1)
+        Δ2 *= op("F",sites[s])
+    end
+    Δ2 *= op("Cup",sites[s2])
+
+    # Take difference and normalize
+    Δ = 1/sqrt(2)*(Δ1 - Δ2)
+end
+
+function apply_twosite_operator(ϕ::MPS, opname::String, sites, s1::Int, s2::Int)
     ϕ = copy(ϕ)
     if opname == "pSC"
-        # Apply F string first 
-        ϕ = apply_op(ϕ, op("F",sites[siteidx]), siteidx)
-
-        # Then apply the operator
-        Π = 1/sqrt(2)*(op("Cup",sites[siteidx])*op("Cdn",sites[siteidx+1])
-                            + op("Cdn",sites[siteidx])*op("Cup",sites[siteidx+1]))
-        return apply_op_twosite(ϕ,Π,siteidx)
-                    
-    elseif opname == "pSCdag"
-        # Apply the operator first
-        Π_dag = 1/sqrt(2)*(op("Cdagdn",sites[siteidx+1])*op("Cdagup",sites[siteidx])
-                            + op("Cdagup",sites[siteidx+1])*op("Cdagdn",sites[siteidx]))
-        ϕ = apply_op_twosite(ϕ,Π_dag,siteidx)
-
-        # Apply the F string 
-        return apply_op(ϕ, op("F",sites[siteidx]), siteidx)
-
+        Π = Π̂(sites, s1, s2)
+        return apply(Π, ϕ)     
+    # elseif opname == "pSCdag"
+    #     Π = Π̂(sites, s1, s2)
+    #     return apply(dag(Π), ϕ)
     elseif opname == "dSC"
-        # Apply F string first 
-        ϕ = apply_op(ϕ, op("F",sites[siteidx]), siteidx)
-
-        # Then apply the operator
-        Δ = 1/sqrt(2)*(op("Cup",sites[siteidx])*op("Cdn",sites[siteidx+1])
-                            - op("Cdn",sites[siteidx])*op("Cup",sites[siteidx+1]))
-        return apply_op_twosite(ϕ,Δ,siteidx)
-
-    elseif opname == "dSCdag"
-        # Apply the operator first
-        Δ_dag = 1/sqrt(2)*(op("Cdagdn",sites[siteidx+1])*op("Cdagup",sites[siteidx])
-                            - op("Cdagup",sites[siteidx+1])*op("Cdagdn",sites[siteidx]))
-        ϕ = apply_op_twosite(ϕ,Δ_dag,siteidx)
-
-        # Apply the F string 
-        return apply_op(ϕ, op("F",sites[siteidx]), siteidx)
+        Δ = Δ̂(sites, s1, s2)
+        return apply(Δ, ϕ)
     end
+    # elseif opname == "dSCdag"
+    #     Δ = Δ̂(sites, s1, s2)
+    #     return apply(dag(Δ), ϕ)
+    # end
     @error "No recognized two-site operator"
 end
 
@@ -561,19 +587,23 @@ function apply_op(ϕ::MPS, op::ITensor, siteidx::Int)
     return ϕ
 end
 
-function apply_op_twosite(ϕ::MPS, G::ITensor, siteidx::Int; cutoff=1E-8)
-    ϕ = copy(ϕ)
-    # Note: siteidx corresponds to the leftermost site
-    orthogonalize!(ϕ,siteidx)
-    wf = (ϕ[siteidx] * ϕ[siteidx+1]) * G
-    noprime!(wf)
+# function apply_op_twosite(ϕ::MPS, G::ITensor, s1::Int, s2::Int; cutoff=1E-8)
+#     ϕ = copy(ϕ)
+#     # Note: s1 corresponds to the leftermost site
+#     @assert s1<s2 
+#     orthogonalize!(ϕ,s1)
+#     wf = (ϕ[s1] * ϕ[s2]) * G
+#     noprime!(wf)
 
-    inds_site = uniqueinds(ϕ[siteidx],ϕ[siteidx+1])
-    U,S,V = svd(wf,inds_site,cutoff=cutoff)
-    ϕ[siteidx] = U
-    ϕ[siteidx+1] = S*V
-    return ϕ
-end
+#     ## QUESTION !!! IF I AM APPLYING A TWO-SITE OPERATOR SEPARATED BY SOME NONZERO
+#     ## NUMBER OF SITES, DO I NEED TO APPLY F-STRINGS IN BETWEEN THE SITES?
+
+#     inds_site = uniqueinds(ϕ[s1],ϕ[s2])
+#     U,S,V = svd(wf,inds_site,cutoff=cutoff)
+#     ϕ[s1] = U
+#     ϕ[s2] = S*V
+#     return ϕ
+# end
 
 function compute_all_equilibrium_correlations(dmrg_results::DMRGResults, 
                                             HM::ThreeBandModel, p::Parameters;
@@ -589,7 +619,7 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
     lattice_indices = convert.(Int, lattice_indices)
 
     # Iterate through all the correlations types and compute them 
-    corrtypes = ["spin","charge","sSC","pSC","dSC"]
+    corrtypes = ["spin","charge","sSC"]
     corrs = []
     for corrtype in corrtypes
         println("Computing ", corrtype, " correlation")
@@ -608,46 +638,43 @@ function compute_equilibrium_pairfield_correlations(dmrg_results::DMRGResults,
                                                 HM::ThreeBandModel, p::Parameters)
 
     compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "sSC")
-    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dy-dy", "dy-dy", "sSC")
-    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dy-dy", "sSC")
-    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "d-px", "d-px", "sSC")
-    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "d-py", "d-py", "sSC")
-    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "px-py", "px-py", "sSC")
+    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "pSC")
+    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "dSC")
 end
 
-function get_bonds(bondtype::String; row=1)
+function get_bonds(bondtype::String, lattice_indices; row=1)
     if bondtype=="d-px" 
         s1 = 2
         s2 = 3
-        r1, r2 = row
+        r1, r2 = row, row
     elseif bondtype=="px-d"
         s1 = 3
         s2 = 2
-        r1, r2 = row
+        r1, r2 = row, row
     elseif bondtype=="dx-dx"
         s1 = 2
         s2 = 5
-        r1, r2 = row
+        r1, r2 = row, row
     elseif bondtype=="dy-dy"
-        s1, s2 = 2
+        s1, s2 = 2, 2
         r1 = 1
         r2 = 2
     elseif bondtype=="d-py"
         s1 = 2
         s2 = 1
-        r1, r2 = row
+        r1, r2 = row, row
     elseif bondtype=="py-d"
         s1 = 1
         s2 = 2
-        r1, r2 = row
+        r1, r2 = row, row
     elseif bondtype=="px-py"
         s1 = 3
         s2 = 1
-        r1, r2 = row
+        r1, r2 = row, row
     elseif bondtype=="py-px"
         s1 = 1
         s2 = 3
-        r1, r2 = row
+        r1, r2 = row, row
     else
         @error "Bond type not recognized"
         return nothing
@@ -656,12 +683,12 @@ function get_bonds(bondtype::String; row=1)
     refbond = (lattice_indices[r1, s1],lattice_indices[r2, s2])
     sites_1 = lattice_indices[r1, s1:3:end] 
     sites_2 = lattice_indices[r2, s2:3:end] 
-    bonds = [(sites_1[n], sites_2[n]) for n in 1:length(sites_1)]
+    bonds = [(sites_1[n], sites_2[n]) for n in 1:length(sites_2)]
 
     return refbond, bonds
 end
 
-function compute_equilibrium_bond_correlation(dmrg_results::DMRGResults, 
+function compute_equilibrium_pairfield_correlation(dmrg_results::DMRGResults, 
                                                 HM::ThreeBandModel, p::Parameters,
                                                 bond1::String, bond2::String, SCtype::String;
                                                 buffer=1, row=1)
@@ -677,43 +704,51 @@ function compute_equilibrium_bond_correlation(dmrg_results::DMRGResults,
     lattice_indices = lattice_indices[:,start:stop] 
 
     # Compute the equilibrium correlations within this chain 
-    refbond, bonds = 
-    corr = bond_correlation(ϕ, )
-    
+    refbond, _ = get_bonds(bond1, lattice_indices, row=row)
+    _, bonds = get_bonds(bond2, lattice_indices, row=row)
+    corr = bond_correlation(ϕ, refbond, bonds, SCtype, HM.sites)
 
     return corr 
 end
 
+function unzip(bonds)
+    sites = []
+    for b in bonds
+        push!(sites, b[1])
+        push!(sites, b[2])
+    end
+    return unique(sites)
+end
+
 function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)
-    
-    
-    
+
     if corrtype=="sSC"
-        ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
+        indices = unzip(bonds) # we don't actually care about bonds, bc it's all on single sites
+        ψ = apply_onesite_operator(ϕ, "Cupdn", sites, indices[1])
         function compute_corr_sSC(i::Int)
-            Σ_iψ = apply_onesite_operator(ψ, "Cdagupdn", sites, i)
-            return inner(ϕ,Σ_iψ)
+            Σ_iϕ = apply_onesite_operator(ϕ, "Cupdn", sites, i)
+            return inner(ψ,Σ_iϕ)
         end
         return compute_corr_sSC.(indices)
 
     elseif corrtype=="pSC"
-        ψ = apply_twosite_operator(ϕ, "pSC", sites, j)
-        function compute_corr_pSC(i::Int)
-            Π_iψ = apply_twosite_operator(ψ, "pSCdag", sites, i)
-            return inner(ϕ,Π_iψ)
+        ψ = apply_twosite_operator(ϕ, "pSC", sites, refbond[1], refbond[2])
+        function compute_corr_pSC(bond)
+            @show bond 
+            Π_iϕ = apply_twosite_operator(ϕ, "pSC", sites, bond[1], bond[2])
+            return inner(ψ,Π_iϕ)
         end
-        return compute_corr_pSC.(indices)
+        return compute_corr_pSC.(bonds)
 
     elseif corrtype=="dSC"
-        ψ = apply_twosite_operator(ϕ, "dSC", sites, j)
-        function compute_corr_dSC(i::Int)
-            Δ_iψ = apply_twosite_operator(ψ, "dSCdag", sites, i)
-            return inner(ϕ,Δ_iψ)
+        ψ = apply_twosite_operator(ϕ, "dSC", sites, refbond[1], refbond[2])
+        function compute_corr_dSC(bond)
+            Δ_iϕ = apply_twosite_operator(ϕ, "dSC", sites, bond[1], bond[2])
+            return inner(ψ,Δ_iϕ)
         end
-        return compute_corr_dSC.(indices)        
+        return compute_corr_dSC.(bonds)        
     end
 
-    @assert 1==0
 end
 
 function compute_equilibrium_correlation(dmrg_results::DMRGResults, 
@@ -763,27 +798,6 @@ function equilibrium_correlations(ϕ::MPS, indices, corrtype::String,sites)
         ni = expect(ϕ, "Ntot")
         nj = ni[j]
         return ninj - nj .* (ni[indices])
-    elseif corrtype=="sSC"
-        ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
-        function compute_corr_sSC(i::Int)
-            Σ_iψ = apply_onesite_operator(ψ, "Cdagupdn", sites, i)
-            return inner(ϕ,Σ_iψ)
-        end
-        return compute_corr_sSC.(indices)
-    elseif corrtype=="pSC"
-        ψ = apply_twosite_operator(ϕ, "pSC", sites, j)
-        function compute_corr_pSC(i::Int)
-            Π_iψ = apply_twosite_operator(ψ, "pSCdag", sites, i)
-            return inner(ϕ,Π_iψ)
-        end
-        return compute_corr_pSC.(indices)
-    elseif corrtype=="dSC"
-        ψ = apply_twosite_operator(ϕ, "dSC", sites, j)
-        function compute_corr_dSC(i::Int)
-            Δ_iψ = apply_twosite_operator(ψ, "dSCdag", sites, i)
-            return inner(ϕ,Δ_iψ)
-        end
-        return compute_corr_dSC.(indices)        
     end
     @error "Unknown correlation type"
 end
