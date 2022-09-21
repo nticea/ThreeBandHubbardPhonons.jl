@@ -734,7 +734,6 @@ function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)
     elseif corrtype=="pSC"
         ψ = apply_twosite_operator(ϕ, "pSC", sites, refbond[1], refbond[2])
         function compute_corr_pSC(bond)
-            @show bond 
             Π_iϕ = apply_twosite_operator(ϕ, "pSC", sites, bond[1], bond[2])
             return inner(ψ,Π_iϕ)
         end
