@@ -515,7 +515,10 @@ function Π̂(sites, s1::Int, s2::Int)
     # Π = 1/sqrt(2)*(op("Cup",sites[s1])*op("Cdn",sites[s2])
     #                     + op("Cdn",sites[s1])*op("Cup",sites[s2]))
 
-    @assert s1 < s2 # ordering matters! these are fermions we're talking about
+    if s1 > s2 # ordering matters! these are fermions we're talking about
+        @warn "s1 > s2"
+        s1, s2 = s2, s1
+    end
 
     # First part 
     Π1 = op("Cup",sites[s1])
@@ -539,7 +542,10 @@ function Δ̂(sites, s1::Int, s2::Int)
     # Δ = 1/sqrt(2)*(op("Cup",sites[s1])*op("Cdn",sites[s2])
     #                         - op("Cdn",sites[s1])*op("Cup",sites[s2]))
 
-    @assert s1 < s2 # ordering matters! these are fermions we're talking about
+    if s1 > s2 # ordering matters! these are fermions we're talking about
+        @warn "s1 > s2"
+        s1, s2 = s2, s1
+    end
 
     # First part
     Δ1 = op("Cup",sites[s1])
@@ -564,17 +570,10 @@ function apply_twosite_operator(ϕ::MPS, opname::String, sites, s1::Int, s2::Int
     if opname == "pSC"
         Π = Π̂(sites, s1, s2)
         return apply(Π, ϕ)     
-    # elseif opname == "pSCdag"
-    #     Π = Π̂(sites, s1, s2)
-    #     return apply(dag(Π), ϕ)
     elseif opname == "dSC"
         Δ = Δ̂(sites, s1, s2)
         return apply(Δ, ϕ)
     end
-    # elseif opname == "dSCdag"
-    #     Δ = Δ̂(sites, s1, s2)
-    #     return apply(dag(Δ), ϕ)
-    # end
     @error "No recognized two-site operator"
 end
 
@@ -631,15 +630,29 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
         end
         push!(corrs,corr)
     end
+    pairfield_corrs = compute_equilibrium_pairfield_correlations(dmrg_results, HM, p)
+    push!(corrs,pairfield_corrs...)
     return EquilibriumCorrelations(start, stop, corrs...)
 end
 
 function compute_equilibrium_pairfield_correlations(dmrg_results::DMRGResults, 
                                                 HM::ThreeBandModel, p::Parameters)
 
-    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "sSC")
-    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "pSC")
-    compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "dSC")
+    # There are 6 pair-field correlations to compute 
+    println("Computing dSC correlations for dx-dx bond")
+    dxdx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "dSC")
+    println("Computing dSC correlations for d-px bond")
+    dpx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "d-px", "d-px", "dSC")
+    println("Computing dSC correlations for dy-dy bond")
+    dydy = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dy-dy", "dy-dy", "dSC")
+    println("Computing dSC correlations for py-d bond")
+    pyd = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-d", "py-d", "dSC")
+    println("Computing dSC correlations for py-px bond")
+    pypx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-px", "py-px", "dSC")
+    println("Computing dSC correlations for px1-py2 bond")
+    pxpy = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py1-px2", "py1-px2", "dSC")
+
+    return [dxdx, dpx, dydy, pyd, pxpy, pypx]
 end
 
 function get_bonds(bondtype::String, lattice_indices; row=1)
@@ -656,21 +669,17 @@ function get_bonds(bondtype::String, lattice_indices; row=1)
         s2 = 5
         r1, r2 = row, row
     elseif bondtype=="dy-dy"
-        s1, s2 = 2, 2
-        r1 = 1
-        r2 = 2
-    elseif bondtype=="d-py"
         s1 = 2
-        s2 = 1
-        r1, r2 = row, row
+        s2 = 2
+        r1, r2 = 1, 2
     elseif bondtype=="py-d"
         s1 = 1
         s2 = 2
         r1, r2 = row, row
-    elseif bondtype=="px-py"
-        s1 = 3
-        s2 = 1
-        r1, r2 = row, row
+    elseif bondtype=="py1-px2"
+        s1 = 1
+        s2 = 3
+        r1, r2 = 1, 2
     elseif bondtype=="py-px"
         s1 = 1
         s2 = 3
@@ -721,6 +730,8 @@ function unzip(bonds)
 end
 
 function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)
+    @show refbond 
+    @show bonds 
 
     if corrtype=="sSC"
         indices = unzip(bonds) # we don't actually care about bonds, bc it's all on single sites

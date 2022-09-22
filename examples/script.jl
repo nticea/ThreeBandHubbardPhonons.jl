@@ -5,6 +5,8 @@ using Dates
 include(joinpath(@__DIR__,"../src/model.jl"))
 include(joinpath(@__DIR__,"../src/utilities.jl"))
 
+ITensors.set_warn_order(50)
+
 ## PARAMETERS ## 
 
 # Model 
