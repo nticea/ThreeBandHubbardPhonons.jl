@@ -117,7 +117,7 @@ function correlations_run(Nx, Ny, yperiodic, μ, εd, εp,
     #     redirect_stdout(io) do 
 
     # Load in the parameters 
-    params = load_params(save_path)
+    p = load_params(save_path)
     println("Loading parameters from ", save_path)
 
     # Load the DMRG results         
@@ -125,7 +125,7 @@ function correlations_run(Nx, Ny, yperiodic, μ, εd, εp,
     dmrg_results = load_dmrg_results(save_path)
 
     # Load the mdoel 
-    TBHModel = ThreeBandModel(params, dmrg_results) # load in the correct sites if we already have a wavefcn
+    HM = ThreeBandModel(p, dmrg_results) # load in the correct sites if we already have a wavefcn
 
     # Compute and save the correlations 
     try 
