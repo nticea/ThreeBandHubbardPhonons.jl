@@ -46,11 +46,10 @@ function plot_spin_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}; 
     title!("Spin density")
 end
 
-function _plot_equilibrium_correlations(corrs, corrtype, start::Int, stop::Int)
-    xrange = collect(1:stop-start+1)
-    xrange = log10.(xrange)
-    
-    plot(xrange, corrs')
+function _plot_equilibrium_correlations(corrs, corrtype)
+    xrange = collect(0:length(corrs)-1)
+    plot(log10.(xrange), log10.(abs.(corrs)))
+    #plot(xrange, corrs)
     title!(corrtype*"-"*corrtype*" correlation")
     xlabel!("Distance from centre site (log10)")
     ylabel!("Correlation (log10)")
@@ -63,17 +62,23 @@ function plot_equilibrium_correlations(eq_corrs::EquilibriumCorrelations,
         corrs = eq_corrs.spin
     elseif corrtype=="charge"
         corrs = eq_corrs.charge
-    elseif corrtype=="sSC"
-        corrs = eq_corrs.sSC
-    elseif corrtype=="pSC"
-        corrs = eq_corrs.pSC
-    elseif corrtype=="dSC"
-        corrs = eq_corrs.dSC  
+    elseif corrtype=="dSC_dxdx"
+        corrs = eq_corrs.dSC_dxdx
+    elseif corrtype=="dSC_dpx"
+        corrs = eq_corrs.dSC_dpx
+    elseif corrtype=="dSC_dydy"
+        corrs = eq_corrs.dSC_dydy
+    elseif corrtype=="dSC_pyd"
+        corrs = eq_corrs.dSC_pyd
+    elseif corrtype=="dSC_pypx"
+        corrs = eq_corrs.dSC_pypx
+    elseif corrtype=="dSC_py1px2"
+        corrs = eq_corrs.dSC_py1px2
     else
         @error "Invalid correlation type"
-    end                               
+    end
 
-    _plot_equilibrium_correlations(corrs, corrtype, eq_corrs.start, eq_corrs.stop)
+    _plot_equilibrium_correlations(corrs, corrtype)
 end
 
 ## CHECKING TEBD RESULTS ##

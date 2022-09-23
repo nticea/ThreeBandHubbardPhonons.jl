@@ -17,9 +17,14 @@ eq_corr = load_equilibrium_correlations(loadpath)
 # Visualize things we want                                                        
 plot_equilibrium_correlations(eq_corr, "spin")
 plot_equilibrium_correlations(eq_corr, "charge")
-plot_equilibrium_correlations(eq_corr, "sSC")
-plot_equilibrium_correlations(eq_corr, "pSC")
-plot_equilibrium_correlations(eq_corr, "dSC")
+plot_equilibrium_correlations(eq_corr, "dSC_dxdx")
+plot_equilibrium_correlations(eq_corr, "dSC_dpx")
+plot_equilibrium_correlations(eq_corr, "dSC_dydy")
+plot_equilibrium_correlations(eq_corr, "dSC_pyd")
+plot_equilibrium_correlations(eq_corr, "dSC_pypx")
+plot_equilibrium_correlations(eq_corr, "dSC_py1px2")
+
 plot_charge_density(dmrg_results)
 plot_phonon_density(dmrg_results)
 plot_spin_density(dmrg_results)
+

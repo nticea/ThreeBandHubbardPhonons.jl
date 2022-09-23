@@ -163,12 +163,12 @@ function load_results(loadpath::String)
     d = read(f)
     @show keys(d)
     dmrg_results = DMRGResultsMinimal(d["ground_state_energy"], 
-                            d["ground_state_entropy"],
-                            d["charge_density"], d["phonon_density"], d["spin_density"])
+                                    d["ground_state_entropy"], d["charge_density"], 
+                                    d["phonon_density"], d["spin_density"])
 
     eq_corr = EquilibriumCorrelations(d["start"], d["stop"], d["spin"], d["charge"], 
-                            d["sSC"], d["pSC"], d["dSC"])
-
+                                    d["dSC_dxdx"], d["dSC_dpx"], d["dSC_dydy"], 
+                                    d["dSC_pyd"], d["dSC_pypx"], d["dSC_py1px2"])
     return dmrg_results, eq_corr
 end
 

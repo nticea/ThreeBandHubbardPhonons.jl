@@ -610,35 +610,52 @@ end
 #     return ϕ
 # end
 
+# function compute_all_equilibrium_correlations(dmrg_results::DMRGResults, 
+#                                             HM::ThreeBandModel, p::Parameters;
+#                                             buffer=1)
+#     Nx, Ny = p.Nx, p.Ny
+#     ϕ = copy(dmrg_results.ground_state)
+#     Nsites = length(ϕ)
+#     start = 4 + (buffer-1)*3 # discard buffer # of unit cells 
+#     stop = 3*Nx - (buffer-1)*3 - 2 # discard the last rung and buffer # of unit cells
+
+#     # Compute the correlations for each row separately 
+#     lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
+#     lattice_indices = convert.(Int, lattice_indices)
+
+#     # Iterate through all the correlations types and compute them 
+#     corrtypes = ["spin","charge"]
+#     corrs = []
+#     for corrtype in corrtypes
+#         println("Computing ", corrtype, " correlation")
+#         corr = zeros(Ny, stop-start+1)
+#         # discard the first unit cell due to edge effects 
+#         for y in 1:Ny
+#             indices = lattice_indices[y,start:stop]
+#             corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+#         end
+#         push!(corrs,corr)
+#     end
+#     pairfield_corrs = compute_equilibrium_pairfield_correlations(dmrg_results, HM, p)
+#     push!(corrs,pairfield_corrs...)
+#     return EquilibriumCorrelations(start, stop, corrs...)
+# end
+
 function compute_all_equilibrium_correlations(dmrg_results::DMRGResults, 
                                             HM::ThreeBandModel, p::Parameters;
                                             buffer=1)
-    Nx, Ny = p.Nx, p.Ny
-    ϕ = copy(dmrg_results.ground_state)
-    Nsites = length(ϕ)
-    start = 4 + (buffer-1)*3 # discard buffer # of unit cells 
-    stop = 3*Nx - (buffer-1)*3 - 2 # discard the last rung and buffer # of unit cells
 
-    # Compute the correlations for each row separately 
-    lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
-    lattice_indices = convert.(Int, lattice_indices)
+    # Compute spin and charge correlations
+    println("Computing spin correlations for dx-dx bond")
+    start, stop, spin_corr = compute_equilibrium_onsite_correlation(dmrg_results,HM,p,"dx-dx","spin")
 
-    # Iterate through all the correlations types and compute them 
-    corrtypes = ["spin","charge"]
-    corrs = []
-    for corrtype in corrtypes
-        println("Computing ", corrtype, " correlation")
-        corr = zeros(Ny, stop-start+1)
-        # discard the first unit cell due to edge effects 
-        for y in 1:Ny
-            indices = lattice_indices[y,start:stop]
-            corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-        end
-        push!(corrs,corr)
-    end
+    println("Computing charge correlations for dx-dx bond")
+    _,_,charge_corr = compute_equilibrium_onsite_correlation(dmrg_results,HM,p,"dx-dx","charge")
+
+    # Compute d-wave pairfield correlations 
     pairfield_corrs = compute_equilibrium_pairfield_correlations(dmrg_results, HM, p)
-    push!(corrs,pairfield_corrs...)
-    return EquilibriumCorrelations(start, stop, corrs...)
+    
+    return EquilibriumCorrelations(start, stop, spin_corr, charge_corr, pairfield_corrs...)
 end
 
 function compute_equilibrium_pairfield_correlations(dmrg_results::DMRGResults, 
@@ -646,19 +663,19 @@ function compute_equilibrium_pairfield_correlations(dmrg_results::DMRGResults,
 
     # There are 6 pair-field correlations to compute 
     println("Computing dSC correlations for dx-dx bond")
-    dxdx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "dSC")
+    _,_,dxdx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "dSC")
     println("Computing dSC correlations for d-px bond")
-    dpx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "d-px", "d-px", "dSC")
+    _,_,dpx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "d-px", "d-px", "dSC")
     println("Computing dSC correlations for dy-dy bond")
-    dydy = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dy-dy", "dy-dy", "dSC")
+    _,_,dydy = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dy-dy", "dy-dy", "dSC")
     println("Computing dSC correlations for py-d bond")
-    pyd = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-d", "py-d", "dSC")
+    _,_,pyd = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-d", "py-d", "dSC")
     println("Computing dSC correlations for py-px bond")
-    pypx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-px", "py-px", "dSC")
+    _,_,pypx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-px", "py-px", "dSC")
     println("Computing dSC correlations for py1-px2 bond")
-    py1px2 = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py1-px2", "py1-px2", "dSC")
+    _,_,py1px2 = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py1-px2", "py1-px2", "dSC")
 
-    return [dxdx, dpx, dydy, pyd, pypx, py1px2]
+    return [dxdx, dpx, dydy, pyd, pypx, py1px2] # transpose for compatibiity w plotting fcn
 end
 
 function get_bonds(bondtype::String, lattice_indices; row=1)
@@ -703,6 +720,28 @@ function get_bonds(bondtype::String, lattice_indices; row=1)
     return refbond, bonds
 end
 
+function compute_equilibrium_onsite_correlation(dmrg_results::DMRGResults, 
+                                                HM::ThreeBandModel, p::Parameters,
+                                                bondtype::String, corrtype::String;
+                                                buffer=1, row=1)
+    Nx, Ny = p.Nx, p.Ny
+    ϕ = copy(dmrg_results.ground_state)
+    Nsites = length(ϕ)
+    start = 4 + (buffer-1)*3 # discard buffer # of unit cells 
+    stop = 3*Nx - (buffer-1)*3 - 2 # discard the last rung and buffer # of unit cells
+
+    # Compute the correlations for each row separately 
+    lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
+    lattice_indices = convert.(Int, lattice_indices) 
+    lattice_indices = lattice_indices[:,start:stop] 
+
+    # Compute the equilibrium correlations within this chain 
+    _, bonds = get_bonds(bondtype, lattice_indices, row=row)
+    corr = onsite_correlation(ϕ, bonds, corrtype, HM.sites)
+
+    return start,stop,corr 
+end
+
 function compute_equilibrium_pairfield_correlation(dmrg_results::DMRGResults, 
                                                 HM::ThreeBandModel, p::Parameters,
                                                 bond1::String, bond2::String, SCtype::String;
@@ -723,7 +762,7 @@ function compute_equilibrium_pairfield_correlation(dmrg_results::DMRGResults,
     _, bonds = get_bonds(bond2, lattice_indices, row=row)
     corr = bond_correlation(ϕ, refbond, bonds, SCtype, HM.sites)
 
-    return corr 
+    return start,stop,corr 
 end
 
 function unzip(bonds)
@@ -733,6 +772,39 @@ function unzip(bonds)
         push!(sites, b[2])
     end
     return unique(sites)
+end
+
+function onsite_correlation(ϕ::MPS, bonds, corrtype::String, sites)
+    ϕ = copy(ϕ)
+    indices = unzip(bonds) # we don't actually care about bonds, bc it's all on single sites
+    j = indices[1]
+
+    if corrtype=="spin"
+        ψ = apply_onesite_operator(ϕ, "Sz", sites, j)
+        function compute_corr_spin(i::Int)
+            Szψ = apply_onesite_operator(ψ, "Sz", sites, i)
+            return inner(ϕ,Szψ)
+        end
+        return compute_corr_spin.(indices)
+    elseif corrtype=="charge"
+        ψ = apply_onesite_operator(ϕ, "Ntot", sites, j)
+        function compute_corr_charge(i::Int)
+            Ntotψ = apply_onesite_operator(ψ, "Ntot", sites, i)
+            return inner(ϕ,Ntotψ)
+        end
+        ninj = compute_corr_charge.(indices)
+        ni = expect(ϕ, "Ntot")
+        nj = ni[j]
+        return ninj - nj .* (ni[indices])
+    elseif corrtype=="sSC"
+        ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
+        function compute_corr_sSC(i::Int)
+            Σ_iϕ = apply_onesite_operator(ϕ, "Cupdn", sites, i)
+            return inner(ψ,Σ_iϕ)
+        end
+        return compute_corr_sSC.(indices)
+    end
+    @error "Unknown correlation type"
 end
 
 function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)
@@ -761,55 +833,56 @@ function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)
         end
         return compute_corr_dSC.(bonds)        
     end
-end
-
-function compute_equilibrium_correlation(dmrg_results::DMRGResults, 
-                                HM::ThreeBandModel, p::Parameters;
-                                corrtype::String="spin",
-                                buffer=1)
-    Nx, Ny = p.Nx, p.Ny
-    ϕ = copy(dmrg_results.ground_state)
-    Nsites = length(ϕ)
-    start = 4 + (buffer-1)*3 # discard buffer # of unit cells 
-    stop = 3*Nx - (buffer-1)*3 - 2 # discard the last rung and buffer # of unit cells
-
-    # Compute the correlations for each row separately 
-    lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
-    lattice_indices = convert.(Int, lattice_indices)
-
-    corr = zeros(Ny, stop-start+1)
-    for y in 1:Ny
-        indices = lattice_indices[y,start:stop]
-        corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-    end
-    return corr, start, stop
-end
-
-function equilibrium_correlations(ϕ::MPS, indices, corrtype::String,sites)
-    ϕ = copy(ϕ)
-    j = indices[1]
-    if corrtype=="spin"
-        #return correlation_matrix(ϕ, "Sz", "Sz")[indices,j]
-        ψ = apply_onesite_operator(ϕ, "Sz", sites, j)
-        function compute_corr_spin(i::Int)
-            Szψ = apply_onesite_operator(ψ, "Sz", sites, i)
-            return inner(ϕ,Szψ)
-        end
-        return compute_corr_spin.(indices)
-    elseif corrtype=="charge"
-        # ninj = correlation_matrix(ϕ, "Ntot", "Ntot")[indices,j]
-        # ni = expect(ϕ, "Ntot")
-        # nj = ni[j]
-        # return ninj - nj .* (ni[indices])
-        ψ = apply_onesite_operator(ϕ, "Ntot", sites, j)
-        function compute_corr_charge(i::Int)
-            Ntotψ = apply_onesite_operator(ψ, "Ntot", sites, i)
-            return inner(ϕ,Ntotψ)
-        end
-        ninj = compute_corr_charge.(indices)
-        ni = expect(ϕ, "Ntot")
-        nj = ni[j]
-        return ninj - nj .* (ni[indices])
-    end
     @error "Unknown correlation type"
 end
+
+# function compute_equilibrium_correlation(dmrg_results::DMRGResults, 
+#                                 HM::ThreeBandModel, p::Parameters;
+#                                 corrtype::String="spin",
+#                                 buffer=1)
+#     Nx, Ny = p.Nx, p.Ny
+#     ϕ = copy(dmrg_results.ground_state)
+#     Nsites = length(ϕ)
+#     start = 4 + (buffer-1)*3 # discard buffer # of unit cells 
+#     stop = 3*Nx - (buffer-1)*3 - 2 # discard the last rung and buffer # of unit cells
+
+#     # Compute the correlations for each row separately 
+#     lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
+#     lattice_indices = convert.(Int, lattice_indices)
+
+#     corr = zeros(Ny, stop-start+1)
+#     for y in 1:Ny
+#         indices = lattice_indices[y,start:stop]
+#         corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
+#     end
+#     return corr, start, stop
+# end
+
+# function equilibrium_correlations(ϕ::MPS, indices, corrtype::String,sites)
+#     ϕ = copy(ϕ)
+#     j = indices[1]
+#     if corrtype=="spin"
+#         #return correlation_matrix(ϕ, "Sz", "Sz")[indices,j]
+#         ψ = apply_onesite_operator(ϕ, "Sz", sites, j)
+#         function compute_corr_spin(i::Int)
+#             Szψ = apply_onesite_operator(ψ, "Sz", sites, i)
+#             return inner(ϕ,Szψ)
+#         end
+#         return compute_corr_spin.(indices)
+#     elseif corrtype=="charge"
+#         # ninj = correlation_matrix(ϕ, "Ntot", "Ntot")[indices,j]
+#         # ni = expect(ϕ, "Ntot")
+#         # nj = ni[j]
+#         # return ninj - nj .* (ni[indices])
+#         ψ = apply_onesite_operator(ϕ, "Ntot", sites, j)
+#         function compute_corr_charge(i::Int)
+#             Ntotψ = apply_onesite_operator(ψ, "Ntot", sites, i)
+#             return inner(ϕ,Ntotψ)
+#         end
+#         ninj = compute_corr_charge.(indices)
+#         ni = expect(ϕ, "Ntot")
+#         nj = ni[j]
+#         return ninj - nj .* (ni[indices])
+#     end
+#     @error "Unknown correlation type"
+# end
