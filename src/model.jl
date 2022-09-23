@@ -244,17 +244,17 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     # copper-oxygen hopping 
     # TRY FLIPPING THE SIGN
     for b in dp_lattice
-        ampo .+= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2
-        ampo .+= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1
-        ampo .+= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2
-        ampo .+= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1
+        ampo .-= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2
+        ampo .-= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1
+        ampo .-= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2
+        ampo .-= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1
     end
     # oxygen-oxygen hopping 
     for b in pp_lattice
-        ampo .+= b.sign*tpp, "Cdagup", b.s1, "Cup", b.s2
-        ampo .+= b.sign*tpp, "Cdagup", b.s2, "Cup", b.s1
-        ampo .+= b.sign*tpp, "Cdagdn", b.s1, "Cdn", b.s2
-        ampo .+= b.sign*tpp, "Cdagdn", b.s2, "Cdn", b.s1
+        ampo .-= b.sign*tpp, "Cdagup", b.s1, "Cup", b.s2
+        ampo .-= b.sign*tpp, "Cdagup", b.s2, "Cup", b.s1
+        ampo .-= b.sign*tpp, "Cdagdn", b.s1, "Cdn", b.s2
+        ampo .-= b.sign*tpp, "Cdagdn", b.s2, "Cdn", b.s1
     end
 
     if max_phonons>0
@@ -631,7 +631,7 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
         push!(corrs,corr)
     end
     pairfield_corrs = compute_equilibrium_pairfield_correlations(dmrg_results, HM, p)
-    push!(corrs,pairfield_corrs...)
+    #push!(corrs,pairfield_corrs...)
     return EquilibriumCorrelations(start, stop, corrs...)
 end
 

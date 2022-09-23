@@ -35,7 +35,7 @@ max_phonons=0 # (n+1)*4 = total site dimension
 DMRG_numsweeps = 20 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
 DMRG_maxdim = 64
-DMRG_cutoff = 1E-10
+DMRG_cutoff = 1E-12
 DMRG_LBO = false
 max_lbo_dim = 12 
 
@@ -54,5 +54,5 @@ println("Finding ground state...")
 dmrg_results = run_DMRG(TBHModel, params, DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer", disk_save=true)
 
 # Equilibrium correlations
-println("Computing equilibrium correlations...")
-eq_corr = compute_all_equilibrium_correlations(dmrg_results, TBHModel, params)
+#println("Computing equilibrium correlations...")
+#eq_corr = compute_all_equilibrium_correlations(dmrg_results, TBHModel, params)
