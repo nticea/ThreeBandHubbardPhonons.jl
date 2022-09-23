@@ -336,14 +336,14 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
     inds_arr = findall(x -> x==ups, state_arr)[begin:2:end]
     state_arr[inds_arr] .= downs
     # Last rung does not get any fermions
-    state_arr[end-2*Ny+1:end] .= emps
+    # state_arr[end-2*Ny+1:end] .= emps
 
     # Account for doping
     if p.doping > 0
-        Nh_doped = floor(Int, p.doping*p.N)
-        @show Nh_doped
+        num_holes_doped = floor(Int, p.doping*p.N)
+        @show num_holes_doped
         # put these holes on the px oxygen orbitals, spaced evenly apart 
-        spacing = floor(Int,p.N/Nh_doped) # spacing between unit cells 
+        spacing = floor(Int,p.N/num_holes_doped) # spacing between unit cells 
         for (i,n) in enumerate(1:spacing:p.N)
             idx = to_site_number(p.Ny, n, "px")
             if isodd(i)
@@ -353,6 +353,9 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
             end
         end
     end
+
+    num_holes_total = length(state_arr) - length(findall(x-> x==emps, state_arr))
+    @show num_holes_total
 
     # NOTE: the QN of this state is preserved during DMRG
     productMPS(HM.sites,state_arr) 

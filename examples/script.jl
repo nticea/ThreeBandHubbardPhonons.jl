@@ -10,7 +10,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=32
+Nx=8
 Ny=2
 yperiodic=true
 
@@ -34,8 +34,8 @@ max_phonons=0 # (n+1)*4 = total site dimension
 # DMRG parameters 
 DMRG_numsweeps = 20 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
-DMRG_maxdim = 1024
-DMRG_cutoff = 0
+DMRG_maxdim = 64
+DMRG_cutoff = 1E-6
 DMRG_LBO = false
 max_lbo_dim = 12 
 
