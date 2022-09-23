@@ -8,7 +8,7 @@ include(joinpath(@__DIR__,"../../../src/run.jl"))
 ## PARAMETERS ## 
 
 # Model 
-Nx=32
+Nx=8
 Ny=2
 yperiodic=true
 
@@ -30,9 +30,9 @@ g1pp=0#0.1
 max_phonons=0 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
-DMRG_numsweeps = 60 # total number of iterations 
-DMRG_maxdim = 1024
-DMRG_cutoff = 1E-12
+DMRG_numsweeps = 20 # total number of iterations 
+DMRG_maxdim = 64
+DMRG_cutoff = 1E-10
 
 ## SAVE OUT INFO ##
 DMRG_numsweeps_per_save = 5 # If don't want to save regularly, just set this to DMRG_numsweeps
@@ -42,4 +42,11 @@ dmrg_run(Nx, Ny, yperiodic, μ, εd, εp,
         g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
         DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
         disk_save=true,
+        dir_path=@__DIR__)
+
+println("Computing correlations...")
+correlations_run(Nx, Ny, yperiodic, μ, εd, εp, 
+        tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
+        g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
+        DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
         dir_path=@__DIR__)
