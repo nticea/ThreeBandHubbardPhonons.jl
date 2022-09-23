@@ -7,7 +7,7 @@ function dmrg_run(Nx, Ny, yperiodic, μ, εd, εp,
 
     param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Upd)Upd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ω)ω_$(g0pp)g0pp_$(g0dd)g0dd_$(g1pd)g1pd_$(g1dp)g1dp_$(g1pp)g1pp"
     save_path = joinpath(dir_path,param_stamp*".h5")
-    results_save_path = joinpath(@__DIR__,param_stamp*"_results.h5")
+    results_save_path = joinpath(dir_path,param_stamp*"_results.h5")
 
     # Create the output file 
     # output_path = joinpath(@__DIR__,param_stamp*"_out.log")
@@ -94,7 +94,7 @@ function correlations_run(Nx, Ny, yperiodic, μ, εd, εp,
 
     param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Upd)Upd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ω)ω_$(g0pp)g0pp_$(g0dd)g0dd_$(g1pd)g1pd_$(g1dp)g1dp_$(g1pp)g1pp"
     save_path = joinpath(dir_path,param_stamp*".h5")
-    results_save_path = joinpath(@__DIR__,param_stamp*"_results.h5")
+    results_save_path = joinpath(dir_path,param_stamp*"_results.h5")
 
     # Create the output file 
     # output_path = joinpath(@__DIR__,param_stamp*"_out.log")

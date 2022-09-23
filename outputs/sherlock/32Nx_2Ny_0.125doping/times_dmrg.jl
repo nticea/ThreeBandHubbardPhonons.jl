@@ -5,6 +5,9 @@ include(joinpath(@__DIR__,"../../../src/model.jl"))
 include(joinpath(@__DIR__,"../../../src/utilities.jl"))
 include(joinpath(@__DIR__,"../../../src/run.jl"))
 
+# The equilibrium corrs require contracting tensors w many indices
+ITensors.set_warn_order(50)
+
 ## PARAMETERS ## 
 
 # Model 
