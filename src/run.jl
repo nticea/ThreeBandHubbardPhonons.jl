@@ -136,14 +136,14 @@ function correlations_run(Nx, Ny, yperiodic, μ, εd, εp,
         println("Computing equilibrium correlations")
     end
 
-    spin_corr, start, stop  = compute_equilibrium_correlation(dmrg_results, TBHModel, params, corrtype="spin")
+    start, stop, spin_corr = compute_equilibrium_onsite_correlation(dmrg_results,HM,p,"dx-dx","spin")
     global eq_corr.start = start
     global eq_corr.stop = stop 
     global eq_corr.spin = spin_corr 
     save_structs(eq_corr, results_save_path)
     println("Saving spin correlation...")
 
-    charge_corr,_,_ = compute_equilibrium_correlation(dmrg_results, TBHModel, params, corrtype="charge")
+    _,_,charge_corr = compute_equilibrium_onsite_correlation(dmrg_results,HM,p,"dx-dx","charge")
     global eq_corr.charge = charge_corr 
     save_structs(eq_corr, results_save_path)
     println("Saving charge correlation...")
