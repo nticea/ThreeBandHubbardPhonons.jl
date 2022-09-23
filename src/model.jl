@@ -77,9 +77,12 @@ mutable struct EquilibriumCorrelations
     stop
     spin
     charge
-    sSC
-    pSC
-    dSC
+    dSC_dxdx
+    dSC_dpx
+    dSC_dydy
+    dSC_pyd
+    dSC_pypx
+    dSC_py1px2
 end
 
 struct TEBDResults
@@ -621,7 +624,7 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
     lattice_indices = convert.(Int, lattice_indices)
 
     # Iterate through all the correlations types and compute them 
-    corrtypes = ["spin","charge","sSC"]
+    corrtypes = ["spin","charge"]
     corrs = []
     for corrtype in corrtypes
         println("Computing ", corrtype, " correlation")
@@ -634,7 +637,7 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
         push!(corrs,corr)
     end
     pairfield_corrs = compute_equilibrium_pairfield_correlations(dmrg_results, HM, p)
-    #push!(corrs,pairfield_corrs...)
+    push!(corrs,pairfield_corrs...)
     return EquilibriumCorrelations(start, stop, corrs...)
 end
 
@@ -652,10 +655,10 @@ function compute_equilibrium_pairfield_correlations(dmrg_results::DMRGResults,
     pyd = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-d", "py-d", "dSC")
     println("Computing dSC correlations for py-px bond")
     pypx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-px", "py-px", "dSC")
-    println("Computing dSC correlations for px1-py2 bond")
-    pxpy = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py1-px2", "py1-px2", "dSC")
+    println("Computing dSC correlations for py1-px2 bond")
+    py1px2 = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py1-px2", "py1-px2", "dSC")
 
-    return [dxdx, dpx, dydy, pyd, pxpy, pypx]
+    return [dxdx, dpx, dydy, pyd, pypx, py1px2]
 end
 
 function get_bonds(bondtype::String, lattice_indices; row=1)
@@ -733,9 +736,6 @@ function unzip(bonds)
 end
 
 function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)
-    @show refbond 
-    @show bonds 
-
     if corrtype=="sSC"
         indices = unzip(bonds) # we don't actually care about bonds, bc it's all on single sites
         ψ = apply_onesite_operator(ϕ, "Cupdn", sites, indices[1])
@@ -761,7 +761,6 @@ function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)
         end
         return compute_corr_dSC.(bonds)        
     end
-
 end
 
 function compute_equilibrium_correlation(dmrg_results::DMRGResults, 
