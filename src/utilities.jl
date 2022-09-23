@@ -155,7 +155,8 @@ function load_equilibrium_correlations(loadpath::String)
     f = h5open(loadpath,"r")
     d = read(f)
     return EquilibriumCorrelations(d["start"], d["stop"], d["spin"], d["charge"], 
-                                    d["sSC"], d["pSC"], d["dSC"])
+                                    d["dSC_dxdx"], d["dSC_dpx"], d["dSC_dydy"], 
+                                    d["dSC_pyd"], d["dSC_pypx"], d["dSC_py1px2"])
 end
 
 function load_results(loadpath::String)
