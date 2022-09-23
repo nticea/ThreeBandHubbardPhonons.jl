@@ -92,33 +92,33 @@ function OxygenCopper_lattice(Nx::Int, Ny::Int; kwargs...)::LatticeCuprate
 
         # Add a pd bond to the right 
         n2 = to_site_number(Ny, x, y, "px")
-        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, 1, "dpx"))
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, -1, "dpx"))
 
         # Add a pd bond to the left
         if x>1
             n2 = to_site_number(Ny, x-1, y, "px")
             if alt 
-                push!(latt,LatticeBondCuprate(n1, n2, x, y, x-1, y, -1, "dpx"))
-            else
                 push!(latt,LatticeBondCuprate(n1, n2, x, y, x-1, y, 1, "dpx"))
+            else
+                push!(latt,LatticeBondCuprate(n1, n2, x, y, x-1, y, -1, "dpx"))
             end
         end
 
         # Add a pd bond above
         n2 = to_site_number(Ny, x, y, "py")
         if alt 
-            push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, -1, "dpy"))
-        else
             push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, 1, "dpy"))
+        else
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, -1, "dpy"))
         end
 
         # Add a pd bond below
         if y>1
             n2 = to_site_number(Ny, x, y-1, "py")
-            push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y-1, 1, "dpy"))
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y-1, -1, "dpy"))
         elseif yperiodic
             n2 = to_site_number(Ny, x, Ny, "py")
-            push!(latt,LatticeBondCuprate(n1, n2, x, y, x, Ny, 1, "dpy"))
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x, Ny, -1, "dpy"))
         end
     end
   end
@@ -132,26 +132,26 @@ function OxygenCopper_lattice(Nx::Int, Ny::Int; kwargs...)::LatticeCuprate
     # Add bond to the left
     n2 = to_site_number(Ny, x-1, y, "px")
     if alt
-        push!(latt,LatticeBondCuprate(n1, n2, x, y, x-1, y, -1, "dpx"))
-    else
         push!(latt,LatticeBondCuprate(n1, n2, x, y, x-1, y, 1, "dpx"))
+    else
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x-1, y, -1, "dpx"))
     end
 
     # Add a pd bond above
     n2 = to_site_number(Ny, x, y, "py")
     if alt
-        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, -1, "dpy"))
-    else
         push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, 1, "dpy"))
+    else
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, -1, "dpy"))
     end
 
     # Add a pd bond below
     if y>1
         n2 = to_site_number(Ny, x, y-1, "py")
-        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y-1, 1, "dpy"))
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y-1, -1, "dpy"))
     elseif yperiodic
         n2 = to_site_number(Ny, x, Ny, "py")
-        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, Ny, 1, "dpy"))
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, Ny, -1, "dpy"))
     end
   end
 
@@ -184,40 +184,40 @@ function OxygenOxygen_lattice(Nx::Int, Ny::Int; kwargs...)::LatticeCuprate
 
         # Add a px-py bond to the upper left (in phase)
         n2 = to_site_number(Ny, x, y, "py")
-        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, 1, "pxpy"))
+        push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y, -1, "pxpy"))
 
         # Add a px-py bond to the upper right (out of phase)
         n2 = to_site_number(Ny, x+1, y, "py")
         if alt
-            push!(latt,LatticeBondCuprate(n1, n2, x, y, x+1, y, -1, "pxpy"))
-        else
             push!(latt,LatticeBondCuprate(n1, n2, x, y, x+1, y, 1, "pxpy"))
+        else
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x+1, y, -1, "pxpy"))
         end
 
         # Add a px-py to the lower left (out of phase)
         if y>1
             n2 = to_site_number(Ny, x, y-1, "py")
             if alt
-                push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y-1, -1, "pxpy"))
-            else
                 push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y-1, 1, "pxpy"))
+            else
+                push!(latt,LatticeBondCuprate(n1, n2, x, y, x, y-1, -1, "pxpy"))
             end
         elseif yperiodic
             n2 = to_site_number(Ny, x, Ny, "py")
             if alt
-                push!(latt,LatticeBondCuprate(n1, n2, x, y, x, Ny, -1, "pxpy"))
-            else
                 push!(latt,LatticeBondCuprate(n1, n2, x, y, x, Ny, 1, "pxpy"))
+            else
+                push!(latt,LatticeBondCuprate(n1, n2, x, y, x, Ny, -1, "pxpy"))
             end
         end
 
         # Add a px-py to the lower right (in phase)
         if y>1
             n2 = to_site_number(Ny, x+1, y-1, "py")
-            push!(latt,LatticeBondCuprate(n1, n2, x, y, x+1, y-1, 1, "pxpy"))
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x+1, y-1, -1, "pxpy"))
         elseif yperiodic
             n2 = to_site_number(Ny, x+1, Ny, "py")
-            push!(latt,LatticeBondCuprate(n1, n2, x, y, x+1, Ny, 1, "pxpy"))
+            push!(latt,LatticeBondCuprate(n1, n2, x, y, x+1, Ny, -1, "pxpy"))
         end
     end
 

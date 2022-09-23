@@ -10,15 +10,15 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=8
+Nx=32
 Ny=2
 yperiodic=true
 
 μ=0
 εd=0
 εp=3
-tpd=-1
-tpp=-0.5
+tpd=1
+tpp=0.5
 Upd=0
 Upp=3
 Udd=8
@@ -34,8 +34,8 @@ max_phonons=0 # (n+1)*4 = total site dimension
 # DMRG parameters 
 DMRG_numsweeps = 20 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
-DMRG_maxdim = 64
-DMRG_cutoff = 1E-12
+DMRG_maxdim = 1024
+DMRG_cutoff = 0
 DMRG_LBO = false
 max_lbo_dim = 12 
 
@@ -45,13 +45,14 @@ params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, 
                     Upp=Upp, Udd=Udd, ω=ω, g0pp=g0pp, g0dd=g0dd, g1pd=g1pd, 
                     g1dp=g1dp, g1pp=g1pp, doping=doping, 
                     max_phonons=max_phonons, DMRG_numsweeps=DMRG_numsweeps,
-                    DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO)
+                    DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO);
 # The Hamiltonian MPO 
-TBHModel = ThreeBandModel(params)
+TBHModel = ThreeBandModel(params);
 
 # Run DMRG
 println("Finding ground state...")
-dmrg_results = run_DMRG(TBHModel, params, DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer", disk_save=true)
+dmrg_results = run_DMRG(TBHModel, params, DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, 
+                        alg="divide_and_conquer", disk_save=true);
 
 # Equilibrium correlations
 #println("Computing equilibrium correlations...")
