@@ -3,6 +3,7 @@ using Plots
 using FFTW
 using NPZ
 using Statistics
+using CurveFit
 include(joinpath(@__DIR__,"model.jl"))
 
 ## EQUILIBRIUM CORRELATIONS ##
@@ -46,17 +47,100 @@ function plot_spin_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}; 
     title!("Spin density")
 end
 
-function _plot_equilibrium_correlations(corrs, corrtype)
-    xrange = collect(0:length(corrs)-1)
+function square_residual(y, ỹ)
+    sum((ỹ .- y).^2)
+end
+
+function exponential_fit(x, y)
+    a,b = exp_fit(x, y)
+    fit_y = a.*exp.(b.*x)
+    err = square_residual(fit_y, y)
+    return a,b,fit_y,err
+end
+
+function power_law_fit(x, y)
+    a,b = power_fit(x, y)
+    fit_y = a.*(x.^b)
+    err = square_residual(fit_y, y)
+    return a,b,fit_y,err
+end 
+
+function compare_fits(x, y)
+    exp_a, exp_b, exp_fit, exp_err  = exponential_fit(x,y)
+    power_a, power_b, power_fit, power_err = power_law_fit(x,y)
+    if power_err < exp_err
+        return "power-law fit", power_a, power_b, power_fit
+    else
+        return "exponential fit", exp_a, exp_b, exp_fit
+    end
+end
+
+function _plot_equilibrium_correlations(corrs, corrtype; do_fit=false, fit_type=nothing)
+    corrs = corrs[1:end] # discard the correlation at zero distance (for now...)
+    xrange = collect(1:length(corrs))
+    #xrange = collect(0:length(corrs)-1)
+
+    if do_fit
+        if isnothing(fit_type)
+            type, a, b, fit = compare_fits(xrange, abs.(corrs))
+        else
+            if fit_type=="exponential"
+                a, b, fit, _ = exponential_fit(xrange, abs.(corrs))
+                type = "exponential fit"
+            elseif fit_type=="power"
+                a, b, fit, _ = power_law_fit(xrange, abs.(corrs))
+                type = "power-law fit"
+            else
+                @error "Fit type not recognized"
+            end
+        end
+    end
+
     plot(log10.(xrange), log10.(abs.(corrs)))
-    #plot(xrange, corrs)
+    title!(corrtype*"-"*corrtype*" correlation")
+    xlabel!("Distance from centre site (log10)")
+    ylabel!("Correlation (log10)")
+    plot!(log10.(xrange), log10.(fit), label=type)
+end
+
+function _plot_equilibrium_correlations_fitted(corrs, corrtype; fit_type=nothing)
+    corrs = corrs[1:end] # discard the correlation at zero distance (for now...)
+    xrange = collect(1:length(corrs))
+    #xrange = collect(0:length(corrs)-1)
+
+    if isnothing(fit_type)
+        type, a, b, fit = compare_fits(xrange, abs.(corrs))
+    else
+        if fit_type=="exponential"
+            a, b, fit, _ = exponential_fit(xrange, abs.(corrs))
+            type = "exponential fit"
+        elseif fit_type=="power"
+            a, b, fit, _ = power_law_fit(xrange, abs.(corrs))
+            type = "power-law fit"
+        else
+            @error "Fit type not recognized"
+        end
+    end
+
+    plot(log10.(xrange), log10.(abs.(corrs)))
+    title!(corrtype*"-"*corrtype*" correlation")
+    xlabel!("Distance from centre site (log10)")
+    ylabel!("Correlation (log10)")
+    plot!(log10.(xrange), log10.(fit), label="$type, k=$b")
+end
+
+function _plot_equilibrium_correlations(corrs, corrtype)
+    corrs = corrs[1:end] # discard the correlation at zero distance (for now...)
+    xrange = collect(1:length(corrs))
+
+    plot(log10.(xrange), log10.(abs.(corrs)))
     title!(corrtype*"-"*corrtype*" correlation")
     xlabel!("Distance from centre site (log10)")
     ylabel!("Correlation (log10)")
 end
 
 function plot_equilibrium_correlations(eq_corrs::EquilibriumCorrelations, 
-                                        corrtype::String)
+                                        corrtype::String; do_fit=true, fit_type=nothing)
 
     if corrtype=="spin"
         corrs = eq_corrs.spin
@@ -78,7 +162,11 @@ function plot_equilibrium_correlations(eq_corrs::EquilibriumCorrelations,
         @error "Invalid correlation type"
     end
 
-    _plot_equilibrium_correlations(corrs, corrtype)
+    if do_fit
+        _plot_equilibrium_correlations_fitted(corrs, corrtype, fit_type=fit_type)
+    else
+        _plot_equilibrium_correlations(corrs, corrtype)
+    end
 end
 
 ## CHECKING TEBD RESULTS ##
