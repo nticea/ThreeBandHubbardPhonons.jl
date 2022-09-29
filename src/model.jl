@@ -339,7 +339,7 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
     inds_arr = findall(x -> x==ups, state_arr)[begin:2:end]
     state_arr[inds_arr] .= downs
     # Last rung does not get any fermions
-    # state_arr[end-2*Ny+1:end] .= emps
+    state_arr[end-2*Ny+1:end] .= emps
 
     # Account for doping
     if p.doping > 0
