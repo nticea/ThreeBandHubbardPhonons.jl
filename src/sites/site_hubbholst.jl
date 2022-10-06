@@ -17,7 +17,7 @@ Optionally specify the conserved symmetries and their quantum number labels.
 """
 function ITensors.space(
   ::SiteType"HubHolst";
-  dim=2, #Default is 1 phonon
+  dim=2, #Default is max 1 phonon  
   conserve_qns=true,
   conserve_sz=conserve_qns,
   conserve_nf=conserve_qns,
