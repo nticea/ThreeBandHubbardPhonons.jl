@@ -27,14 +27,14 @@ doping=0.125
 ω=0.1
 g0pp=0.01
 g0dd=0.01
-g1pd=0
-g1dp=0
+g1pd=0.001
+g1dp=0.001
 g1pp=0
 max_phonons=3 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
 DMRG_numsweeps = 80 # total number of iterations 
-DMRG_maxdim = 2048
+DMRG_maxdim = 4000
 DMRG_cutoff = 1E-10
 
 ## SAVE OUT INFO ##
