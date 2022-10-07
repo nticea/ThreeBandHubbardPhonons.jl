@@ -32,7 +32,7 @@ g1pp=0#0.1
 max_phonons=0 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
-DMRG_numsweeps = 20 # total number of iterations 
+DMRG_numsweeps = 15 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
 DMRG_maxdim = 1024
 DMRG_cutoff = 1E-10
