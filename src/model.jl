@@ -2,6 +2,9 @@ using ITensors
 using Statistics: mean
 include("lattices/cuprate_lattice.jl")
 include("sites/site_hubbholst.jl")
+include("sites/threeband/copper.jl")
+include("sites/threeband/oxygen.jl")
+include("sites/threeband/site_threeband.jl")
 include("lattices/visualize_lattice.jl")
 include("dmrg_lbo.jl")
 
@@ -229,10 +232,18 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
         # on-site repulsion
         ampo .+= U_coefs[n], "Nupdn", n
         if max_phonons>0
-            # phonon 
-            ampo .+= ω, "Nb", n
-            # on-site e-ph interactions
-            ampo .+= eph_coefs[n], "Ntot(Bd+B)", n
+            # phonon mode # 1
+            ampo .+= ω, "Nb1", n
+            # phonon mode # 2
+            ampo .+= ω, "Nb2", n
+            # phonon mode # 3
+            ampo .+= ω, "Nb3", n
+            # on-site e-ph interactions -- mode # 1
+            ampo .+= eph_coefs[n], "Ntot(B1d+B1)", n
+            # on-site e-ph interactions -- mode # 2
+            ampo .+= eph_coefs[n], "Ntot(B2d+B2)", n
+            # on-site e-ph interactions -- mode # 3
+            ampo .+= eph_coefs[n], "Ntot(B3d+B3)", n
         end
     end
 
@@ -263,14 +274,26 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     if max_phonons>0
         # electron-phonon nearest neighbour
         for b in dp_lattice
-            # phonon on copper, electron on oxygen
-            ampo .+= g1dp, "Bdag+B", b.s1, "Ntot", b.s2 
-            # phonon on oxygen, electron on copper
-            ampo .+= g1pd, "Bdag+B", b.s2, "Ntot", b.s1 
+            # phonon mode # 1 on copper, electron on oxygen
+            ampo .+= g1dp, "B1dag+B1", b.s1, "Ntot", b.s2 
+            # phonon mode # 1 on oxygen, electron on copper
+            ampo .+= g1pd, "B1dag+B1", b.s2, "Ntot", b.s1 
+            # phonon mode # 2 on copper, electron on oxygen
+            ampo .+= g1dp, "B2dag+B2", b.s1, "Ntot", b.s2 
+            # phonon mode # 2 on oxygen, electron on copper
+            ampo .+= g1pd, "B2dag+B2", b.s2, "Ntot", b.s1 
+            # phonon mode # 3 on copper, electron on oxygen
+            ampo .+= g1dp, "B3dag+B3", b.s1, "Ntot", b.s2 
+            # phonon mode # 3 on oxygen, electron on copper
+            ampo .+= g1pd, "B3dag+B3", b.s2, "Ntot", b.s1 
         end
         for b in pp_lattice
-            # phonon on oxygen, electron on oxygen
-            ampo .+= g1pp, "Bdag+B", b.s1, "Ntot", b.s2
+            # phonon mode # 1 on oxygen, electron on oxygen
+            ampo .+= g1pp, "B1dag+B1", b.s1, "Ntot", b.s2
+            # phonon mode # 2 on oxygen, electron on oxygen
+            ampo .+= g1pp, "B2dag+B2", b.s1, "Ntot", b.s2
+            # phonon mode # 3 on oxygen, electron on oxygen
+            ampo .+= g1pp, "B3dag+B3", b.s1, "Ntot", b.s2
         end
     end
 
@@ -297,7 +320,10 @@ end
 Make a three-band Hubbard model with phonons given a set of input parameters 
 """
 function ThreeBandModel(p::Parameters)
-    sites = siteinds("HubHolst", p.Nsites; dim=p.max_phonons+1)
+    #sites = siteinds("HubHolst", p.Nsites; dim=p.max_phonons+1)
+    sites = siteinds("TBHSite", p.Nsites)
+    #site_labels = make_coefficients(Nx+1, Ny, "TBH_d", "TBH_px", "TBH_py")
+    #sites = [siteinds(site_labels[i], 1) for i in 1:p.Nsites]
     return ThreeBandModel(p, sites)
 end
 

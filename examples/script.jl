@@ -23,18 +23,18 @@ Upd=0
 Upp=3
 Udd=8
 doping=0.125
-ω=0#0.5
-g0pp=0#0.1
-g0dd=0#0.1
-g1pd=0#0.1
-g1dp=0#0.1
-g1pp=0#0.1
-max_phonons=0 # (n+1)*4 = total site dimension 
+ω=0.1
+g0pp=0.01
+g0dd=0.01
+g1pd=0.001
+g1dp=0.001
+g1pp=0.001
+max_phonons=3 # (n+1)*4 = total site dimension 
 
 # DMRG parameters 
 DMRG_numsweeps = 15 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
-DMRG_maxdim = 1024
+DMRG_maxdim = 64
 DMRG_cutoff = 1E-10
 DMRG_LBO = false
 max_lbo_dim = 12 
