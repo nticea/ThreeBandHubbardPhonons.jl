@@ -20,7 +20,7 @@ yperiodic=true
 εp=3
 tpd=1
 tpp=0.5
-Upd=0
+Vpd=0
 Upp=3
 Udd=8
 doping=0.125
@@ -41,7 +41,7 @@ DMRG_cutoff = 1E-10
 DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to DMRG_numsweeps
 println("Running DMRG...")
 dmrg_run(Nx, Ny, yperiodic, μ, εd, εp, 
-        tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
+        tpd, tpp, Vpd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
         g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
         DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
         disk_save=true,
@@ -49,7 +49,7 @@ dmrg_run(Nx, Ny, yperiodic, μ, εd, εp,
 
 println("Computing correlations...")
 correlations_run(Nx, Ny, yperiodic, μ, εd, εp, 
-        tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
+        tpd, tpp, Vpd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
         g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
         DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
         dir_path=@__DIR__)

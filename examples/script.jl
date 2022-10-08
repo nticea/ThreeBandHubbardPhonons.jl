@@ -19,7 +19,7 @@ yperiodic=true
 εp=3
 tpd=1
 tpp=0.5
-Upd=0
+Vpd=0
 Upp=3
 Udd=8
 doping=0.125
@@ -31,6 +31,14 @@ g1dp=0.001
 g1pp=0.001
 max_phonons=3 # (n+1)*4 = total site dimension 
 
+## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
+COPPER_DIM_1 = 1 # maximum 1 phonon 
+COPPER_DIM_2 = 1 # maximum 2 phonon 
+COPPER_DIM_3 = 1 # maximum 1 phonon 
+OXYGEN_DIM_1 = 1 # maximum 1 phonon 
+OXYGEN_DIM_2 = 1 # maximum 1 phonon 
+OXYGEN_DIM_3 = 1 # maximum 1 phonon 
+
 # DMRG parameters 
 DMRG_numsweeps = 15 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
@@ -41,10 +49,14 @@ max_lbo_dim = 12
 
 # Initialize 
 println("Initializing...")
-params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, tpp=tpp, Upd=Upd, 
+params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, tpp=tpp, Vpd=Vpd, 
                     Upp=Upp, Udd=Udd, ω=ω, g0pp=g0pp, g0dd=g0dd, g1pd=g1pd, 
                     g1dp=g1dp, g1pp=g1pp, doping=doping, 
-                    max_phonons=max_phonons, DMRG_numsweeps=DMRG_numsweeps,
+                    dim_copper_mode_1=COPPER_DIM_1, dim_copper_mode_2=COPPER_DIM_2, 
+                    dim_copper_mode_3=COPPER_DIM_3,
+                    dim_oxygen_mode_1=OXYGEN_DIM_1, dim_oxygen_mode_2=OXYGEN_DIM_2, 
+                    dim_oxygen_mode_3=OXYGEN_DIM_3,
+                    DMRG_numsweeps=DMRG_numsweeps,
                     DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO);
 # The Hamiltonian MPO 
 TBHModel = ThreeBandModel(params);

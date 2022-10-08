@@ -1,10 +1,9 @@
 using ITensors
 using Statistics: mean
 include("lattices/cuprate_lattice.jl")
-include("sites/site_hubbholst.jl")
+#include("sites/site_hubbholst.jl")
 include("sites/threeband/copper.jl")
 include("sites/threeband/oxygen.jl")
-include("sites/threeband/site_threeband.jl")
 include("lattices/visualize_lattice.jl")
 include("dmrg_lbo.jl")
 
@@ -16,7 +15,6 @@ struct Parameters
     Nsites::Int # number of sites in the MPS representation 
     yperiodic::Bool
     doping::Real
-    max_phonons::Int
     init_phonons::Int
 
     # Hamiltonian
@@ -25,7 +23,7 @@ struct Parameters
     εp::Real
     tpd::Real
     tpp::Real
-    Upd::Real
+    Vpd::Real
     Upp::Real
     Udd::Real
     ω::Real
@@ -34,6 +32,14 @@ struct Parameters
     g1pd::Real
     g1dp::Real
     g1pp::Real
+
+    # phonon modes 
+    dim_copper_mode_1::Int
+    dim_copper_mode_2::Int
+    dim_copper_mode_3::Int
+    dim_oxygen_mode_1::Int
+    dim_oxygen_mode_2::Int
+    dim_oxygen_mode_3::Int
 
     # DMRG 
     DMRG_numsweeps
@@ -114,7 +120,6 @@ end
 function parameters(;Nx::Int, Ny::Int, 
     yperiodic=false, 
     doping=0,
-    max_phonons::Int=1, 
     init_phonons::Int=0,
 
     μ=0,
@@ -122,7 +127,7 @@ function parameters(;Nx::Int, Ny::Int,
     εp=3,
     tpd=1,
     tpp=0.5,
-    Upd=0,
+    Vpd=0,
     Upp=3,
     Udd=8,
     ω::Real,
@@ -131,6 +136,14 @@ function parameters(;Nx::Int, Ny::Int,
     g1pd::Real,
     g1dp::Real,
     g1pp::Real,
+
+    # phonon modes 
+    dim_copper_mode_1::Int,
+    dim_copper_mode_2::Int,
+    dim_copper_mode_3::Int,
+    dim_oxygen_mode_1::Int,
+    dim_oxygen_mode_2::Int,
+    dim_oxygen_mode_3::Int,
 
     DMRG_numsweeps::Int=20, DMRG_noise=nothing, 
     DMRG_maxdim=nothing, DMRG_cutoff=nothing, DMRG_LBO=false,
@@ -179,11 +192,12 @@ function parameters(;Nx::Int, Ny::Int,
     Nsites = 3*N + 2*Ny # 3 sites per unit cell + another rung to have equal # pos and neg phase bonds
     mid = ceil(Int,Nsites/2) # midpoint of the DMRG chain 
 
-    return Parameters(N, Nx, Ny, Nsites, yperiodic, doping, max_phonons, init_phonons,
-            μ, εd, εp, tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, g1dp, g1pp,
+    return Parameters(N, Nx, Ny, Nsites, yperiodic, doping, init_phonons,
+            μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, ω, g0pp, g0dd, g1pd, g1dp, g1pp,
+            dim_copper_mode_1, dim_copper_mode_2, dim_copper_mode_3,
+            dim_oxygen_mode_1, dim_oxygen_mode_2, dim_oxygen_mode_3,
             DMRG_numsweeps, DMRG_noise, DMRG_maxdim, DMRG_cutoff, DMRG_LBO,
             max_LBO_dim, min_LBO_dim, mid, T, τ, TEBD_cutoff, TEBD_maxdim, TEBD_LBO)
-    
 end
 
 function are_equal(p1::Parameters, p2::Parameters)
@@ -213,10 +227,14 @@ function visualize_lattice(p::Parameters)
 end
 
 function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
-    Nsites, Nx, Ny, yperiodic, max_phonons = p.Nsites, p.Nx, p.Ny, p.yperiodic, p.max_phonons
-    μ, εd, εp, tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, g1dp, g1pp = p.μ, p.εd, p.εp, p.tpd, p.tpp, p.Upd, p.Upp, p.Udd, p.ω, p.g0pp, p.g0dd, p.g1pd, p.g1dp, p.g1pp
+    Nsites, Nx, Ny, yperiodic = p.Nsites, p.Nx, p.Ny, p.yperiodic
+    μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, ω, g0pp, g0dd, g1pd, g1dp, g1pp = p.μ, p.εd, p.εp, p.tpd, p.tpp, p.Vpd, p.Upp, p.Udd, p.ω, p.g0pp, p.g0dd, p.g1pd, p.g1dp, p.g1pp
+    dim_copper_mode_1, dim_copper_mode_2, dim_copper_mode_3,
+            dim_oxygen_mode_1, dim_oxygen_mode_2, dim_oxygen_mode_3 = p.dim_copper_mode_1, p.dim_copper_mode_2, p.dim_copper_mode_3,
+                                                                    p.dim_oxygen_mode_1, p.dim_oxygen_mode_2, p.dim_oxygen_mode_3
     dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic)
     pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic)
+    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen", "Oxygen")
 
     # make the hamiltonian 
     ampo = OpSum()
@@ -225,7 +243,7 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     μ_coefs = make_coefficients(Nx+1, Ny, εd-μ, εp-μ, εp-μ)
     U_coefs = make_coefficients(Nx+1, Ny, Udd, Upp, Upp)
     eph_coefs = make_coefficients(Nx+1, Ny, g0dd, g0pp, g0pp)
-    for n in 1:Nsites
+    for (n, site_type) in zip(1:Nsites, site_labels)
         # chemical potential term
         # NOTE: MAYBE THIS IS DOING UNNECESSARY WORK -- add Δ term only to px/py
         ampo .+= μ_coefs[n], "Ntot", n
@@ -233,26 +251,38 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
         ampo .+= U_coefs[n], "Nupdn", n
         if max_phonons>0
             # phonon mode # 1
-            ampo .+= ω, "Nb1", n
+            if site_type == "Copper" && dim_copper_mode_1 > 1
+                ampo .+= ω, "Nb1", n # Einstein mode 
+                ampo .+= eph_coefs[n], "Ntot(B1d+B1)", n # On-site e-ph coupling 
+            elseif site_type == "Oxygen" && dim_oxygen_mode_1 > 1
+                ampo .+= ω, "Nb1", n
+                ampo .+= eph_coefs[n], "Ntot(B1d+B1)", n
+            end
             # phonon mode # 2
-            ampo .+= ω, "Nb2", n
+            if site_type == "Copper" && dim_copper_mode_2 > 1
+                ampo .+= ω, "Nb2", n
+                ampo .+= eph_coefs[n], "Ntot(B2d+B2)", n
+            elseif site_type == "Oxygen" && dim_oxygen_mode_2 > 1
+                ampo .+= ω, "Nb2", n
+                ampo .+= eph_coefs[n], "Ntot(B2d+B2)", n
+            end
             # phonon mode # 3
-            ampo .+= ω, "Nb3", n
-            # on-site e-ph interactions -- mode # 1
-            ampo .+= eph_coefs[n], "Ntot(B1d+B1)", n
-            # on-site e-ph interactions -- mode # 2
-            ampo .+= eph_coefs[n], "Ntot(B2d+B2)", n
-            # on-site e-ph interactions -- mode # 3
-            ampo .+= eph_coefs[n], "Ntot(B3d+B3)", n
+            if site_type == "Copper" && dim_copper_mode_3 > 1
+                ampo .+= ω, "Nb3", n
+                ampo .+= eph_coefs[n], "Ntot(B3d+B3)", n
+            elseif site_type == "Oxygen" && dim_oxygen_mode_3 > 1
+                ampo .+= ω, "Nb3", n
+                ampo .+= eph_coefs[n], "Ntot(B3d+B3)", n
+            end 
         end
     end
 
     # repulsion copper-oxygen
     for b in dp_lattice
-        ampo .+= Upd, "Nup", b.s1, "Nup", b.s2
-        ampo .+= Upd, "Ndn", b.s1, "Ndn", b.s2
-        ampo .+= Upd, "Nup", b.s1, "Ndn", b.s2
-        ampo .+= Upd, "Ndn", b.s1, "Nup", b.s2
+        ampo .+= Vpd, "Nup", b.s1, "Nup", b.s2
+        ampo .+= Vpd, "Ndn", b.s1, "Ndn", b.s2
+        ampo .+= Vpd, "Nup", b.s1, "Ndn", b.s2
+        ampo .+= Vpd, "Ndn", b.s1, "Nup", b.s2
     end
 
     # copper-oxygen hopping 
@@ -271,27 +301,65 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
         ampo .-= b.sign*tpp, "Cdagdn", b.s2, "Cdn", b.s1
     end
 
-    if max_phonons>0
-        # electron-phonon nearest neighbour
-        for b in dp_lattice
-            # phonon mode # 1 on copper, electron on oxygen
-            ampo .+= g1dp, "B1dag+B1", b.s1, "Ntot", b.s2 
-            # phonon mode # 1 on oxygen, electron on copper
-            ampo .+= g1pd, "B1dag+B1", b.s2, "Ntot", b.s1 
-            # phonon mode # 2 on copper, electron on oxygen
-            ampo .+= g1dp, "B2dag+B2", b.s1, "Ntot", b.s2 
-            # phonon mode # 2 on oxygen, electron on copper
-            ampo .+= g1pd, "B2dag+B2", b.s2, "Ntot", b.s1 
-            # phonon mode # 3 on copper, electron on oxygen
-            ampo .+= g1dp, "B3dag+B3", b.s1, "Ntot", b.s2 
-            # phonon mode # 3 on oxygen, electron on copper
-            ampo .+= g1pd, "B3dag+B3", b.s2, "Ntot", b.s1 
+    # electron-phonon nearest neighbour
+    # electron-phonon nearest neighbour
+    for b in dp_lattice
+        if site_labels[b.s1] == "Copper"
+            # Put ph on copper, put e on oxygen 
+            if dim_copper_mode_1 > 1
+                ampo .+= g1dp, "B1dag+B1", b.s1, "Ntot", b.s2
+            end
+            if dim_copper_mode_2 > 1
+                ampo .+= g1dp, "B2dag+B2", b.s1, "Ntot", b.s2
+            end
+            if dim_copper_mode_3 > 1
+                ampo .+= g1dp, "B3dag+B3", b.s1, "Ntot", b.s2
+            end
+            # Put e on copper, put ph on oxygen 
+            if dim_oxygen_mode_1 > 1
+                ampo .+= g1pd, "Ntot", b.s1, "B1dag+B1", b.s2
+            end
+            if dim_oxygen_mode_2 > 1
+                ampo .+= g1pd, "Ntot", b.s1, "B2dag+B2", b.s2
+            end
+            if dim_oxygen_mode_3 > 1
+                ampo .+= g1pd, "Ntot", b.s1, "B3dag+B3", b.s2
+            end
+        elseif site_labels[b.s1] == "Oxygen"
+            # Put ph on oxygen, put e on copper 
+            if dim_oxygen_mode_1 > 1
+                ampo .+= g1dp, "B1dag+B1", b.s1, "Ntot", b.s2
+            end
+            if dim_oxygen_mode_2 > 1
+                ampo .+= g1dp, "B2dag+B2", b.s1, "Ntot", b.s2
+            end
+            if dim_oxygen_mode_3 > 1
+                ampo .+= g1dp, "B3dag+B3", b.s1, "Ntot", b.s2
+            end
+            # Put e on oxygen, put ph on copper 
+            if dim_copper_mode_1 > 1
+                ampo .+= g1pd, "Ntot", b.s1, "B1dag+B1", b.s2
+            end
+            if dim_copper_mode_2 > 1
+                ampo .+= g1pd, "Ntot", b.s1, "B2dag+B2", b.s2
+            end
+            if dim_copper_mode_3 > 1
+                ampo .+= g1pd, "Ntot", b.s1, "B3dag+B3", b.s2
+            end
         end
-        for b in pp_lattice
+    end
+
+    for b in pp_lattice
+        # phonon mode # 1
+        if dim_oxygen_mode_1 > 1
             # phonon mode # 1 on oxygen, electron on oxygen
             ampo .+= g1pp, "B1dag+B1", b.s1, "Ntot", b.s2
+        end
+        if dim_oxygen_mode_2 > 1
             # phonon mode # 2 on oxygen, electron on oxygen
             ampo .+= g1pp, "B2dag+B2", b.s1, "Ntot", b.s2
+        end
+        if dim_oxygen_mode_3 > 1
             # phonon mode # 3 on oxygen, electron on oxygen
             ampo .+= g1pp, "B3dag+B3", b.s1, "Ntot", b.s2
         end
@@ -320,10 +388,10 @@ end
 Make a three-band Hubbard model with phonons given a set of input parameters 
 """
 function ThreeBandModel(p::Parameters)
-    #sites = siteinds("HubHolst", p.Nsites; dim=p.max_phonons+1)
-    sites = siteinds("TBHSite", p.Nsites)
-    #site_labels = make_coefficients(Nx+1, Ny, "TBH_d", "TBH_px", "TBH_py")
-    #sites = [siteinds(site_labels[i], 1) for i in 1:p.Nsites]
+    # sites = siteinds("HubHolst", p.Nsites; dim=p.max_phonons+1)
+    # sites = siteinds("TBHSite", p.Nsites)
+    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen", "Oxygen")
+    sites = [siteinds(site_labels[i], 1)[1] for i in 1:p.Nsites]
     return ThreeBandModel(p, sites)
 end
 
@@ -393,6 +461,44 @@ end
 function ladder_expectation(ϕ::MPS, opname::String, p::Parameters)
     density1D = expect(ϕ, opname)
     return reshape_into_lattice(density1D, p.Nx, p.Ny)
+end
+
+function expect(T::ITensor, opname::String, s; normalization=1)
+    val = scalar(T * op(opname, s) * dag(prime(T, s))) / normalization
+end
+
+function ladder_expectation_phonons(ϕ::MPS, p::Parameters)
+    norm2_ϕ = norm(ϕ)^2
+    sites = siteinds(psi)
+
+    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen", "Oxygen")
+    density1D = zeros(p.Nsites, 3)
+    for (n, site_type) in zip(1:p.Nsites, site_labels)
+        # Phonon mode 1 
+        if site_type == "Copper" && p.dim_copper_mode_1 > 1
+            density1D[n,1] = expect(ϕ[n], "Nb1", sites[n], normalization=norm2_ϕ)
+        elseif site_type=="Oxygen" && p.dim_oxygen_mode_1 > 1
+            density1D[n,1] = expect(ϕ[n], "Nb1", sites[n], normalization=norm2_ϕ)
+        end
+        # Phonon mode 2
+        if site_type == "Copper" && p.dim_copper_mode_2 > 1
+            density1D[n,2] = expect(ϕ[n], "Nb2", sites[n], normalization=norm2_ϕ)
+        elseif site_type=="Oxygen" && p.dim_oxygen_mode_2 > 1
+            density1D[n,2] = expect(ϕ[n], "Nb2", sites[n], normalization=norm2_ϕ)
+        end
+        # Phonon mode 3 
+        if site_type == "Copper" && p.dim_copper_mode_3 > 1
+            density1D[n,3] = expect(ϕ[n], "Nb3", sites[n], normalization=norm2_ϕ)
+        elseif site_type=="Oxygen" && p.dim_oxygen_mode_3 > 1
+            density1D[n,3] = expect(ϕ[n], "Nb3", sites[n], normalization=norm2_ϕ)
+        end
+    end
+    # reshape each dimension 
+    density2D = zeroes(p.Nx, p.Ny, 3)
+    for i in size(density1D)[2]
+        density2D[:,:,i] = reshape_into_lattice(density1D[:,i], p.Nx, p.Ny)
+    end 
+    return density2D 
 end
 
 function get_sweeps(p::Parameters, DMRG_numsweeps_per_save::Int)
@@ -471,12 +577,7 @@ function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters;
     entropy = compute_entropy(ϕ, p.mid)
     charge_density = ladder_expectation(ϕ, "Ntot", p)
     spin_density = ladder_expectation(ϕ, "Sz", p)
-    if p.max_phonons > 0
-        phonon_density = ladder_expectation(ϕ, "Nb", p)
-    else
-        phonon_density = zeros(p.Nx, p.Ny)
-    end
-
+    phonon_density = ladder_expectation_phonons(ϕ, p)
     return DMRGResults(nsweep, maxdim, cutoff, noise, ϕ, energy, entropy, 
                         Rs, charge_density, phonon_density, spin_density)
 end
