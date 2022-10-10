@@ -169,9 +169,6 @@ function parameters(;Nx::Int, Ny::Int,
         g1pp = 0
     end
 
-    if max_phonons==0
-        @assert ω==g0pp==g0dd==g1pd==g1dp==g1pp==0
-    end
     if TEBD_LBO
         @assert DMRG_LBO
     end
@@ -212,16 +209,16 @@ end
 function visualize_lattice(p::Parameters)
     Nx, Ny, yperiodic = p.Nx, p.Ny, p.yperiodic
     if yperiodic
-        pd_latt = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic)
-        pp_latt = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic)
+        pd_latt = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
+        pp_latt = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
         visualize(pd_latt)
         visualize!(pp_latt)
     end
     # even if we are working w periodic boundary conditions, the alternating plus/minus bonds
     # are hidden along the y direction for the pd lattice bc of the periodic bonds, 
     # so we plot it again on top just for visualization's sake 
-    pd_latt = OxygenCopper_lattice(Nx, Ny; yperiodic=false) 
-    pp_latt = OxygenOxygen_lattice(Nx, Ny; yperiodic=false)
+    pd_latt = OxygenCopper_lattice(Nx, Ny; yperiodic=false, alternate_sign=true) 
+    pp_latt = OxygenOxygen_lattice(Nx, Ny; yperiodic=false, alternate_sign=true)
     visualize!(pd_latt)
     visualize!(pp_latt)
 end
@@ -232,8 +229,8 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     dim_copper_mode_1, dim_copper_mode_2, dim_copper_mode_3,
             dim_oxygen_mode_1, dim_oxygen_mode_2, dim_oxygen_mode_3 = p.dim_copper_mode_1, p.dim_copper_mode_2, p.dim_copper_mode_3,
                                                                     p.dim_oxygen_mode_1, p.dim_oxygen_mode_2, p.dim_oxygen_mode_3
-    dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic)
-    pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic)
+    dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
+    pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen", "Oxygen")
 
     # make the hamiltonian 
@@ -244,37 +241,40 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     U_coefs = make_coefficients(Nx+1, Ny, Udd, Upp, Upp)
     eph_coefs = make_coefficients(Nx+1, Ny, g0dd, g0pp, g0pp)
     for (n, site_type) in zip(1:Nsites, site_labels)
+        
         # chemical potential term
         # NOTE: MAYBE THIS IS DOING UNNECESSARY WORK -- add Δ term only to px/py
         ampo .+= μ_coefs[n], "Ntot", n
+        
         # on-site repulsion
         ampo .+= U_coefs[n], "Nupdn", n
-        if max_phonons>0
-            # phonon mode # 1
-            if site_type == "Copper" && dim_copper_mode_1 > 1
-                ampo .+= ω, "Nb1", n # Einstein mode 
-                ampo .+= eph_coefs[n], "Ntot(B1d+B1)", n # On-site e-ph coupling 
-            elseif site_type == "Oxygen" && dim_oxygen_mode_1 > 1
-                ampo .+= ω, "Nb1", n
-                ampo .+= eph_coefs[n], "Ntot(B1d+B1)", n
-            end
-            # phonon mode # 2
-            if site_type == "Copper" && dim_copper_mode_2 > 1
-                ampo .+= ω, "Nb2", n
-                ampo .+= eph_coefs[n], "Ntot(B2d+B2)", n
-            elseif site_type == "Oxygen" && dim_oxygen_mode_2 > 1
-                ampo .+= ω, "Nb2", n
-                ampo .+= eph_coefs[n], "Ntot(B2d+B2)", n
-            end
-            # phonon mode # 3
-            if site_type == "Copper" && dim_copper_mode_3 > 1
-                ampo .+= ω, "Nb3", n
-                ampo .+= eph_coefs[n], "Ntot(B3d+B3)", n
-            elseif site_type == "Oxygen" && dim_oxygen_mode_3 > 1
-                ampo .+= ω, "Nb3", n
-                ampo .+= eph_coefs[n], "Ntot(B3d+B3)", n
-            end 
+
+        # phonon mode # 1
+        if site_type == "Copper" && dim_copper_mode_1 > 1
+            ampo .+= ω, "Nb1", n # Einstein mode 
+            ampo .+= eph_coefs[n], "Ntot(B1d+B1)", n # On-site e-ph coupling 
+        elseif site_type == "Oxygen" && dim_oxygen_mode_1 > 1
+            ampo .+= ω, "Nb1", n
+            ampo .+= eph_coefs[n], "Ntot(B1d+B1)", n
         end
+        
+        # phonon mode # 2
+        if site_type == "Copper" && dim_copper_mode_2 > 1
+            ampo .+= ω, "Nb2", n
+            ampo .+= eph_coefs[n], "Ntot(B2d+B2)", n
+        elseif site_type == "Oxygen" && dim_oxygen_mode_2 > 1
+            ampo .+= ω, "Nb2", n
+            ampo .+= eph_coefs[n], "Ntot(B2d+B2)", n
+        end
+        
+        # phonon mode # 3
+        if site_type == "Copper" && dim_copper_mode_3 > 1
+            ampo .+= ω, "Nb3", n
+            ampo .+= eph_coefs[n], "Ntot(B3d+B3)", n
+        elseif site_type == "Oxygen" && dim_oxygen_mode_3 > 1
+            ampo .+= ω, "Nb3", n
+            ampo .+= eph_coefs[n], "Ntot(B3d+B3)", n
+        end 
     end
 
     # repulsion copper-oxygen
@@ -286,13 +286,13 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     end
 
     # copper-oxygen hopping 
-    # TRY FLIPPING THE SIGN
     for b in dp_lattice
         ampo .-= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2
         ampo .-= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1
         ampo .-= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2
         ampo .-= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1
     end
+
     # oxygen-oxygen hopping 
     for b in pp_lattice
         ampo .-= b.sign*tpp, "Cdagup", b.s1, "Cup", b.s2
@@ -301,8 +301,7 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
         ampo .-= b.sign*tpp, "Cdagdn", b.s2, "Cdn", b.s1
     end
 
-    # electron-phonon nearest neighbour
-    # electron-phonon nearest neighbour
+    # electron-phonon nearest neighbour, oxygen-copper 
     for b in dp_lattice
         if site_labels[b.s1] == "Copper"
             # Put ph on copper, put e on oxygen 
@@ -328,40 +327,107 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
         elseif site_labels[b.s1] == "Oxygen"
             # Put ph on oxygen, put e on copper 
             if dim_oxygen_mode_1 > 1
-                ampo .+= g1dp, "B1dag+B1", b.s1, "Ntot", b.s2
+                ampo .+= g1pd, "B1dag+B1", b.s1, "Ntot", b.s2
             end
             if dim_oxygen_mode_2 > 1
-                ampo .+= g1dp, "B2dag+B2", b.s1, "Ntot", b.s2
+                ampo .+= g1pd, "B2dag+B2", b.s1, "Ntot", b.s2
             end
             if dim_oxygen_mode_3 > 1
-                ampo .+= g1dp, "B3dag+B3", b.s1, "Ntot", b.s2
+                ampo .+= g1pd, "B3dag+B3", b.s1, "Ntot", b.s2
             end
             # Put e on oxygen, put ph on copper 
             if dim_copper_mode_1 > 1
-                ampo .+= g1pd, "Ntot", b.s1, "B1dag+B1", b.s2
+                ampo .+= g1dp, "Ntot", b.s1, "B1dag+B1", b.s2
             end
             if dim_copper_mode_2 > 1
-                ampo .+= g1pd, "Ntot", b.s1, "B2dag+B2", b.s2
+                ampo .+= g1dp, "Ntot", b.s1, "B2dag+B2", b.s2
             end
             if dim_copper_mode_3 > 1
-                ampo .+= g1pd, "Ntot", b.s1, "B3dag+B3", b.s2
+                ampo .+= g1dp, "Ntot", b.s1, "B3dag+B3", b.s2
             end
         end
     end
 
+    # copper-oxygen hopping 
+    for b in dp_lattice
+        ampo .-= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2
+        ampo .-= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1
+        ampo .-= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2
+        ampo .-= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1
+    end
+
+    # electron-phonon nearest neighbour, oxygen-oxygen 
+    # IS THIS HERMITIAN ??? ## 
     for b in pp_lattice
         # phonon mode # 1
         if dim_oxygen_mode_1 > 1
             # phonon mode # 1 on oxygen, electron on oxygen
             ampo .+= g1pp, "B1dag+B1", b.s1, "Ntot", b.s2
+            ampo .+= g1pp, "Ntot", b.s1, "B1dag+B1", b.s2
         end
         if dim_oxygen_mode_2 > 1
             # phonon mode # 2 on oxygen, electron on oxygen
             ampo .+= g1pp, "B2dag+B2", b.s1, "Ntot", b.s2
+            ampo .+= g1pp, "Ntot", b.s1, "B2dag+B2", b.s2
         end
         if dim_oxygen_mode_3 > 1
             # phonon mode # 3 on oxygen, electron on oxygen
             ampo .+= g1pp, "B3dag+B3", b.s1, "Ntot", b.s2
+            ampo .+= g1pp, "Ntot", b.s1, "B3dag+B3", b.s2
+        end
+    end
+
+    ## DEFORMATION COUPLING ##
+    for b in dp_lattice
+        if site_labels[b.s1] == "Copper"
+            # Mode 1 (only add phonons to oxygen)
+            if dim_oxygen_mode_1 > 1
+                ampo .+= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2, "B1dag+B1", b.s2
+                ampo .+= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1, "B1dag+B1", b.s2
+                ampo .+= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2, "B1dag+B1", b.s2
+                ampo .+= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1, "B1dag+B1", b.s2
+            end
+
+            # Mode 2 
+            if dim_oxygen_mode_2 > 1
+                ampo .+= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2, "B2dag+B2", b.s2
+                ampo .+= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1, "B2dag+B2", b.s2
+                ampo .+= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2, "B2dag+B2", b.s2
+                ampo .+= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1, "B2dag+B2", b.s2
+            end
+
+            # Mode 3 
+            if dim_oxygen_mode_3 > 1
+                ampo .+= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2, "B3dag+B3", b.s2
+                ampo .+= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1, "B3dag+B3", b.s2
+                ampo .+= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2, "B3dag+B3", b.s2
+                ampo .+= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1, "B3dag+B3", b.s2
+            end
+
+        elseif site_labels[b.s1] == "Oxygen"
+            # Mode 1 (only add phonons to oxygen)
+            if dim_oxygen_mode_1 > 1
+                ampo .+= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2, "B1dag+B1", b.s1
+                ampo .+= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1, "B1dag+B1", b.s1
+                ampo .+= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2, "B1dag+B1", b.s1
+                ampo .+= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1, "B1dag+B1", b.s1
+            end
+
+            # Mode 2 
+            if dim_oxygen_mode_2 > 1
+                ampo .+= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2, "B2dag+B2", b.s1
+                ampo .+= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1, "B2dag+B2", b.s1
+                ampo .+= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2, "B2dag+B2", b.s1
+                ampo .+= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1, "B2dag+B2", b.s1
+            end
+
+            # Mode 3 
+            if dim_oxygen_mode_3 > 1
+                ampo .+= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2, "B3dag+B3", b.s1
+                ampo .+= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1, "B3dag+B3", b.s1
+                ampo .+= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2, "B3dag+B3", b.s1
+                ampo .+= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1, "B3dag+B3", b.s1
+            end
         end
     end
 
@@ -401,9 +467,9 @@ function compute_overlap(ψ1::MPS, ψ2::MPS)
     LinearAlgebra.norm(inner(ψ1, ψ2))
 end
 
-function compute_phonon_number(ψ::MPS)
-    expect(ψ,"Nb")
-end
+# function compute_phonon_number(ψ::MPS)
+#     expect(ψ,"Nb")
+# end
 
 function compute_electron_number(ψ::MPS)
     expect(ψ,"Ntot")
@@ -463,39 +529,39 @@ function ladder_expectation(ϕ::MPS, opname::String, p::Parameters)
     return reshape_into_lattice(density1D, p.Nx, p.Ny)
 end
 
-function expect(T::ITensor, opname::String, s; normalization=1)
+function expectation_tensor(T::ITensor, opname::String, s; normalization=1)
     val = scalar(T * op(opname, s) * dag(prime(T, s))) / normalization
 end
 
 function ladder_expectation_phonons(ϕ::MPS, p::Parameters)
     norm2_ϕ = norm(ϕ)^2
-    sites = siteinds(psi)
+    sites = siteinds(ϕ)
 
     site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen", "Oxygen")
     density1D = zeros(p.Nsites, 3)
     for (n, site_type) in zip(1:p.Nsites, site_labels)
         # Phonon mode 1 
         if site_type == "Copper" && p.dim_copper_mode_1 > 1
-            density1D[n,1] = expect(ϕ[n], "Nb1", sites[n], normalization=norm2_ϕ)
+            density1D[n,1] = expectation_tensor(ϕ[n], "Nb1", sites[n], normalization=norm2_ϕ)
         elseif site_type=="Oxygen" && p.dim_oxygen_mode_1 > 1
-            density1D[n,1] = expect(ϕ[n], "Nb1", sites[n], normalization=norm2_ϕ)
+            density1D[n,1] = expectation_tensor(ϕ[n], "Nb1", sites[n], normalization=norm2_ϕ)
         end
         # Phonon mode 2
         if site_type == "Copper" && p.dim_copper_mode_2 > 1
-            density1D[n,2] = expect(ϕ[n], "Nb2", sites[n], normalization=norm2_ϕ)
+            density1D[n,2] = expectation_tensor(ϕ[n], "Nb2", sites[n], normalization=norm2_ϕ)
         elseif site_type=="Oxygen" && p.dim_oxygen_mode_2 > 1
-            density1D[n,2] = expect(ϕ[n], "Nb2", sites[n], normalization=norm2_ϕ)
+            density1D[n,2] = expectation_tensor(ϕ[n], "Nb2", sites[n], normalization=norm2_ϕ)
         end
         # Phonon mode 3 
         if site_type == "Copper" && p.dim_copper_mode_3 > 1
-            density1D[n,3] = expect(ϕ[n], "Nb3", sites[n], normalization=norm2_ϕ)
+            density1D[n,3] = expectation_tensor(ϕ[n], "Nb3", sites[n], normalization=norm2_ϕ)
         elseif site_type=="Oxygen" && p.dim_oxygen_mode_3 > 1
-            density1D[n,3] = expect(ϕ[n], "Nb3", sites[n], normalization=norm2_ϕ)
+            density1D[n,3] = expectation_tensor(ϕ[n], "Nb3", sites[n], normalization=norm2_ϕ)
         end
     end
     # reshape each dimension 
-    density2D = zeroes(p.Nx, p.Ny, 3)
-    for i in size(density1D)[2]
+    density2D = zeros(p.Ny, p.Nx*3+2, 3)
+    for i in 1:3
         density2D[:,:,i] = reshape_into_lattice(density1D[:,i], p.Nx, p.Ny)
     end 
     return density2D 
@@ -609,11 +675,7 @@ function run_DMRG(HM::ThreeBandModel, p::Parameters;
     entropy = compute_entropy(ϕ, p.mid)
     charge_density = ladder_expectation(ϕ, "Ntot", p)
     spin_density = ladder_expectation(ϕ, "Sz", p)
-    if p.max_phonons > 0
-        phonon_density = ladder_expectation(ϕ, "Nb", p)
-    else
-        phonon_density = zeros(p.Nx, p.Ny)
-    end
+    phonon_density = ladder_expectation_phonons(ϕ, p)
 
     return DMRGResults(nsweep, maxdim, cutoff, noise, ϕ, energy, entropy, 
                         Rs, charge_density, phonon_density, spin_density)
@@ -718,55 +780,6 @@ function apply_op(ϕ::MPS, op::ITensor, siteidx::Int)
     ϕ[siteidx] = new_ϕj
     return ϕ
 end
-
-# function apply_op_twosite(ϕ::MPS, G::ITensor, s1::Int, s2::Int; cutoff=1E-8)
-#     ϕ = copy(ϕ)
-#     # Note: s1 corresponds to the leftermost site
-#     @assert s1<s2 
-#     orthogonalize!(ϕ,s1)
-#     wf = (ϕ[s1] * ϕ[s2]) * G
-#     noprime!(wf)
-
-#     ## QUESTION !!! IF I AM APPLYING A TWO-SITE OPERATOR SEPARATED BY SOME NONZERO
-#     ## NUMBER OF SITES, DO I NEED TO APPLY F-STRINGS IN BETWEEN THE SITES?
-
-#     inds_site = uniqueinds(ϕ[s1],ϕ[s2])
-#     U,S,V = svd(wf,inds_site,cutoff=cutoff)
-#     ϕ[s1] = U
-#     ϕ[s2] = S*V
-#     return ϕ
-# end
-
-# function compute_all_equilibrium_correlations(dmrg_results::DMRGResults, 
-#                                             HM::ThreeBandModel, p::Parameters;
-#                                             buffer=1)
-#     Nx, Ny = p.Nx, p.Ny
-#     ϕ = copy(dmrg_results.ground_state)
-#     Nsites = length(ϕ)
-#     start = 4 + (buffer-1)*3 # discard buffer # of unit cells 
-#     stop = 3*Nx - (buffer-1)*3 - 2 # discard the last rung and buffer # of unit cells
-
-#     # Compute the correlations for each row separately 
-#     lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
-#     lattice_indices = convert.(Int, lattice_indices)
-
-#     # Iterate through all the correlations types and compute them 
-#     corrtypes = ["spin","charge"]
-#     corrs = []
-#     for corrtype in corrtypes
-#         println("Computing ", corrtype, " correlation")
-#         corr = zeros(Ny, stop-start+1)
-#         # discard the first unit cell due to edge effects 
-#         for y in 1:Ny
-#             indices = lattice_indices[y,start:stop]
-#             corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-#         end
-#         push!(corrs,corr)
-#     end
-#     pairfield_corrs = compute_equilibrium_pairfield_correlations(dmrg_results, HM, p)
-#     push!(corrs,pairfield_corrs...)
-#     return EquilibriumCorrelations(start, stop, corrs...)
-# end
 
 function compute_all_equilibrium_correlations(dmrg_results::DMRGResults, 
                                             HM::ThreeBandModel, p::Parameters;
@@ -962,54 +975,3 @@ function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)
     end
     @error "Unknown correlation type"
 end
-
-# function compute_equilibrium_correlation(dmrg_results::DMRGResults, 
-#                                 HM::ThreeBandModel, p::Parameters;
-#                                 corrtype::String="spin",
-#                                 buffer=1)
-#     Nx, Ny = p.Nx, p.Ny
-#     ϕ = copy(dmrg_results.ground_state)
-#     Nsites = length(ϕ)
-#     start = 4 + (buffer-1)*3 # discard buffer # of unit cells 
-#     stop = 3*Nx - (buffer-1)*3 - 2 # discard the last rung and buffer # of unit cells
-
-#     # Compute the correlations for each row separately 
-#     lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
-#     lattice_indices = convert.(Int, lattice_indices)
-
-#     corr = zeros(Ny, stop-start+1)
-#     for y in 1:Ny
-#         indices = lattice_indices[y,start:stop]
-#         corr[y,:] = equilibrium_correlations(ϕ,indices,corrtype,HM.sites)
-#     end
-#     return corr, start, stop
-# end
-
-# function equilibrium_correlations(ϕ::MPS, indices, corrtype::String,sites)
-#     ϕ = copy(ϕ)
-#     j = indices[1]
-#     if corrtype=="spin"
-#         #return correlation_matrix(ϕ, "Sz", "Sz")[indices,j]
-#         ψ = apply_onesite_operator(ϕ, "Sz", sites, j)
-#         function compute_corr_spin(i::Int)
-#             Szψ = apply_onesite_operator(ψ, "Sz", sites, i)
-#             return inner(ϕ,Szψ)
-#         end
-#         return compute_corr_spin.(indices)
-#     elseif corrtype=="charge"
-#         # ninj = correlation_matrix(ϕ, "Ntot", "Ntot")[indices,j]
-#         # ni = expect(ϕ, "Ntot")
-#         # nj = ni[j]
-#         # return ninj - nj .* (ni[indices])
-#         ψ = apply_onesite_operator(ϕ, "Ntot", sites, j)
-#         function compute_corr_charge(i::Int)
-#             Ntotψ = apply_onesite_operator(ψ, "Ntot", sites, i)
-#             return inner(ϕ,Ntotψ)
-#         end
-#         ninj = compute_corr_charge.(indices)
-#         ni = expect(ϕ, "Ntot")
-#         nj = ni[j]
-#         return ninj - nj .* (ni[indices])
-#     end
-#     @error "Unknown correlation type"
-# end
