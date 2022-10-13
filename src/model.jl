@@ -26,12 +26,10 @@ struct Parameters
     Vpd::Real
     Upp::Real
     Udd::Real
-    ω::Real
-    g0pp::Real
-    g0dd::Real
-    g1pd::Real
-    g1dp::Real
-    g1pp::Real
+    ωB1g::Real 
+    ω1g::Real
+    gB1g::Real
+    gA1g::Real
 
     # phonon modes 
     dim_copper_mode_1::Int
@@ -130,12 +128,10 @@ function parameters(;Nx::Int, Ny::Int,
     Vpd=0,
     Upp=3,
     Udd=8,
-    ω::Real,
-    g0pp::Real,
-    g0dd::Real,
-    g1pd::Real,
-    g1dp::Real,
-    g1pp::Real,
+    ωB1g::Real, # New parameters for the model 
+    ω1g::Real,
+    gB1g::Real, 
+    gA1g::Real,
 
     # phonon modes 
     dim_copper_mode_1::Int,
@@ -150,23 +146,17 @@ function parameters(;Nx::Int, Ny::Int,
     max_LBO_dim=nothing, min_LBO_dim=4,
     T::Int=25, τ::Real=0.1, TEBD_cutoff=1E-14, TEBD_maxdim=400, TEBD_LBO=false)
 
-    if isnothing(ω)
-        ω = 0.5*tpd
+    if isnothing(ωB1g)
+        ωB1g = 0.5*tpd
     end
-    if isnothing(g0pp)
-        g0pp = 0.05*tpd
+    if isnothing(ω1g)
+        ω1g = 0.05*tpd
     end
-    if isnothing(g0dd)
-        g0dd = 0.05*tpd
+    if isnothing(gB1g)
+        gB1g = 0.01*tpd
     end
-    if isnothing(g1pd)
-        g1pd = 0
-    end
-    if isnothing(g1dp)
-        g1dp = 0
-    end
-    if isnothing(g1pp)
-        g1pp = 0
+    if isnothing(gA1g)
+        gA1g = 0.05*tpd
     end
 
     if TEBD_LBO
@@ -190,7 +180,7 @@ function parameters(;Nx::Int, Ny::Int,
     mid = ceil(Int,Nsites/2) # midpoint of the DMRG chain 
 
     return Parameters(N, Nx, Ny, Nsites, yperiodic, doping, init_phonons,
-            μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, ω, g0pp, g0dd, g1pd, g1dp, g1pp,
+            μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, ωB1g, ω1g, gB1g, gA1g,
             dim_copper_mode_1, dim_copper_mode_2, dim_copper_mode_3,
             dim_oxygen_mode_1, dim_oxygen_mode_2, dim_oxygen_mode_3,
             DMRG_numsweeps, DMRG_noise, DMRG_maxdim, DMRG_cutoff, DMRG_LBO,
@@ -223,6 +213,87 @@ function visualize_lattice(p::Parameters)
     visualize!(pp_latt)
 end
 
+function make_ampo_cuprates(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
+    # Lattice parameters 
+    Nsites, Nx, Ny, yperiodic = p.Nsites, p.Nx, p.Ny, p.yperiodic
+    # Hubbard parameters 
+    μ, εd, εp, tpd, tpp, Vpd, Upp, Udd = p.μ, p.εd, p.εp, p.tpd, p.tpp, p.Vpd, p.Upp, p.Udd
+    # Phonon parameters 
+    ωB1g, ω1g, gB1g, gA1g = p.ωB1g, p.ω1g, p.gB1g, p.gA1g
+    dim_copper_mode_1, dim_copper_mode_2, dim_copper_mode_3,
+        dim_oxygen_mode_1, dim_oxygen_mode_2, dim_oxygen_mode_3 = p.dim_copper_mode_1, p.dim_copper_mode_2, p.dim_copper_mode_3,
+                                                                    p.dim_oxygen_mode_1, p.dim_oxygen_mode_2, p.dim_oxygen_mode_3
+    dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
+    pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
+    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen_py", "Oxygen_px")
+
+    # make the hamiltonian 
+    ampo = OpSum()
+
+    # on-site terms 
+    μ_coefs = make_coefficients(Nx+1, Ny, εd-μ, εp-μ, εp-μ)
+    U_coefs = make_coefficients(Nx+1, Ny, Udd, Upp, Upp)
+    for (n, site_type) in zip(1:Nsites, site_labels)
+        
+        # chemical potential term
+        ampo .+= μ_coefs[n], "Ntot", n  
+        
+        # on-site repulsion
+        ampo .+= U_coefs[n], "Nupdn", n 
+
+        # phonon mode # 1 
+        if site_type == "Copper" && dim_copper_mode_1 > 1
+            ampo .+= ωB1g, "Nb1", n # on-site d mode 1 
+        elseif site_type == "Oxygen_px" && dim_oxygen_mode_1 > 1
+            ampo .+= ωB1g, "Nb1", n # on-site px mode 1 
+            ampo .+= gB1g, "Ntot(B1d+B1)", n # on-site px coupling mode 1 
+        elseif site_type == "Oxygen_py" && dim_oxygen_mode_1 > 1
+            ampo .+= ωB1g, "Nb1", n # on-site py mode 1 
+            ampo .+= -gB1g, "Ntot(B1d+B1)", n # on-site py coupling mode 1 - NOTE THE NEGATIVE!
+        end
+        
+        # phonon mode # 2
+        if site_type == "Copper" && dim_copper_mode_2 > 1
+            ampo .+= ω1g, "Nb2", n # on-site d mode 2 
+        elseif site_type == "Oxygen_px" && dim_oxygen_mode_2 > 1
+            ampo .+= ω1g, "Nb2", n # on-site px mode 2
+            ampo .+= gA1g, "Ntot(B2d+B2)", n # on-site px coupling mode 2
+        elseif site_type == "Oxygen_py" && dim_oxygen_mode_2 > 1
+            ampo .+= ω1g, "Nb2", n # on-site py mode 2
+            ampo .+= gA1g, "Ntot(B2d+B2)", n # on-site py coupling mode 2
+        end
+    end
+
+    # repulsion copper-oxygen
+    for b in dp_lattice
+        ampo .+= Vpd, "Nup", b.s1, "Nup", b.s2
+        ampo .+= Vpd, "Ndn", b.s1, "Ndn", b.s2
+        ampo .+= Vpd, "Nup", b.s1, "Ndn", b.s2
+        ampo .+= Vpd, "Ndn", b.s1, "Nup", b.s2
+    end
+
+    # copper-oxygen hopping
+    for b in dp_lattice
+        ampo .-= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2
+        ampo .-= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1
+        ampo .-= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2
+        ampo .-= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1
+    end
+
+    # oxygen-oxygen hopping
+    for b in pp_lattice
+        ampo .-= b.sign*tpp, "Cdagup", b.s1, "Cup", b.s2
+        ampo .-= b.sign*tpp, "Cdagup", b.s2, "Cup", b.s1
+        ampo .-= b.sign*tpp, "Cdagdn", b.s1, "Cdn", b.s2
+        ampo .-= b.sign*tpp, "Cdagdn", b.s2, "Cdn", b.s1
+    end
+
+    return MPO(ampo,sites)
+end
+
+"""
+This is the most generic set-up for making a 3BH model  
+"""
 function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     Nsites, Nx, Ny, yperiodic = p.Nsites, p.Nx, p.Ny, p.yperiodic
     μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, ω, g0pp, g0dd, g1pd, g1dp, g1pp = p.μ, p.εd, p.εp, p.tpd, p.tpp, p.Vpd, p.Upp, p.Udd, p.ω, p.g0pp, p.g0dd, p.g1pd, p.g1dp, p.g1pp
@@ -242,14 +313,13 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     eph_coefs = make_coefficients(Nx+1, Ny, g0dd, g0pp, g0pp)
     for (n, site_type) in zip(1:Nsites, site_labels)
         
-        # chemical potential term
-        # NOTE: MAYBE THIS IS DOING UNNECESSARY WORK -- add Δ term only to px/py
-        ampo .+= μ_coefs[n], "Ntot", n
+        # chemical potential term --> INCLUDE 
+        ampo .+= μ_coefs[n], "Ntot", n  
         
-        # on-site repulsion
-        ampo .+= U_coefs[n], "Nupdn", n
+        # on-site repulsion --> INCLUDE 
+        ampo .+= U_coefs[n], "Nupdn", n 
 
-        # phonon mode # 1
+        # phonon mode # 1 --> INCLUDE 
         if site_type == "Copper" && dim_copper_mode_1 > 1
             ampo .+= ω, "Nb1", n # Einstein mode 
             ampo .+= eph_coefs[n], "Ntot(B1d+B1)", n # On-site e-ph coupling 
@@ -258,7 +328,7 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
             ampo .+= eph_coefs[n], "Ntot(B1d+B1)", n
         end
         
-        # phonon mode # 2
+        # phonon mode # 2 --> INCLUDE 
         if site_type == "Copper" && dim_copper_mode_2 > 1
             ampo .+= ω, "Nb2", n
             ampo .+= eph_coefs[n], "Ntot(B2d+B2)", n
@@ -267,7 +337,7 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
             ampo .+= eph_coefs[n], "Ntot(B2d+B2)", n
         end
         
-        # phonon mode # 3
+        # phonon mode # 3 --> DONT INCLUDE  
         if site_type == "Copper" && dim_copper_mode_3 > 1
             ampo .+= ω, "Nb3", n
             ampo .+= eph_coefs[n], "Ntot(B3d+B3)", n
@@ -277,7 +347,7 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
         end 
     end
 
-    # repulsion copper-oxygen
+    # repulsion copper-oxygen --> INCLUDE
     for b in dp_lattice
         ampo .+= Vpd, "Nup", b.s1, "Nup", b.s2
         ampo .+= Vpd, "Ndn", b.s1, "Ndn", b.s2
@@ -285,7 +355,7 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
         ampo .+= Vpd, "Ndn", b.s1, "Nup", b.s2
     end
 
-    # copper-oxygen hopping 
+    # copper-oxygen hopping --> INCLUDE
     for b in dp_lattice
         ampo .-= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2
         ampo .-= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1
@@ -293,7 +363,7 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
         ampo .-= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1
     end
 
-    # oxygen-oxygen hopping 
+    # oxygen-oxygen hopping --> INCLUDE
     for b in pp_lattice
         ampo .-= b.sign*tpp, "Cdagup", b.s1, "Cup", b.s2
         ampo .-= b.sign*tpp, "Cdagup", b.s2, "Cup", b.s1
@@ -305,20 +375,20 @@ function make_ampo(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
     for b in dp_lattice
         if site_labels[b.s1] == "Copper"
             # Put ph on copper, put e on oxygen 
-            if dim_copper_mode_1 > 1
+            if dim_copper_mode_1 > 1 # --> DONT INCLUDE
                 ampo .+= g1dp, "B1dag+B1", b.s1, "Ntot", b.s2
             end
-            if dim_copper_mode_2 > 1
+            if dim_copper_mode_2 > 1 # --> DONT INCLUDE
                 ampo .+= g1dp, "B2dag+B2", b.s1, "Ntot", b.s2
             end
-            if dim_copper_mode_3 > 1
+            if dim_copper_mode_3 > 1 # --> DONT INCLUDE
                 ampo .+= g1dp, "B3dag+B3", b.s1, "Ntot", b.s2
             end
             # Put e on copper, put ph on oxygen 
-            if dim_oxygen_mode_1 > 1
+            if dim_oxygen_mode_1 > 1 # --> INCLUDE
                 ampo .+= g1pd, "Ntot", b.s1, "B1dag+B1", b.s2
             end
-            if dim_oxygen_mode_2 > 1
+            if dim_oxygen_mode_2 > 1 # --> INCLUDE
                 ampo .+= g1pd, "Ntot", b.s1, "B2dag+B2", b.s2
             end
             if dim_oxygen_mode_3 > 1
@@ -438,7 +508,7 @@ end
 Use this function for reconstructing from scratch given site indices 
 """
 function ThreeBandModel(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
-    H = make_ampo(p, sites)
+    H = make_ampo_cuprates(p, sites)
     gates = [] #TODO ! make_gates(p, sites)
     # Return the struct 
     ThreeBandModel(sites, H, gates)

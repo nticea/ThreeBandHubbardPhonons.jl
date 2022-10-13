@@ -1,11 +1,18 @@
-function dmrg_run(Nx, Ny, yperiodic, μ, εd, εp, 
-                tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
-                g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
-                DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
+function dmrg_run(Nx, Ny, yperiodic, 
+                μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
+                ωB1g, ω1g, gB1g, gA1g, 
+                doping, 
+                dim_copper_mode_1, 
+                dim_copper_mode_2, 
+                dim_copper_mode_3,
+                dim_oxygen_mode_1, 
+                dim_oxygen_mode_2, 
+                dim_oxygen_mode_3,
+                DMRG_numsweeps, DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
                 disk_save=false,
                 dir_path=@__DIR__)
 
-    param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Upd)Upd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ω)ω_$(g0pp)g0pp_$(g0dd)g0dd_$(g1pd)g1pd_$(g1dp)g1dp_$(g1pp)g1pp"
+    param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Vpd)Vpd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ωB1g)ωB1g_$(ω1g)ω1g_$(gB1g)gB1g_$(gA1g)gA1g"
     save_path = joinpath(dir_path,param_stamp*".h5")
     results_save_path = joinpath(dir_path,param_stamp*"_results.h5")
 
@@ -36,12 +43,15 @@ function dmrg_run(Nx, Ny, yperiodic, μ, εd, εp,
         global params = load_params(save_path)
         println("Loading parameters from ", save_path)
     catch 
-        global params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, 
-            tpd=tpd, tpp=tpp, Upd=Upd, 
-            Upp=Upp, Udd=Udd, ω=ω, g0pp=g0pp, g0dd=g0dd, g1pd=g1pd, 
-            g1dp=g1dp, g1pp=g1pp, doping=doping, 
-            max_phonons=max_phonons, DMRG_numsweeps=DMRG_numsweeps,
-            DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff)
+        global params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, 
+                        tpp=tpp, Vpd=Vpd, Upp=Upp, Udd=Udd, 
+                        ωB1g=ωB1g, ω1g=ω1g, gB1g=gB1g, gA1g=gA1g,doping=doping, 
+                        dim_copper_mode_1=dim_copper_mode_1, dim_copper_mode_2=dim_copper_mode_2, 
+                        dim_copper_mode_3=dim_copper_mode_3,
+                        dim_oxygen_mode_1=dim_oxygen_mode_1, dim_oxygen_mode_2=dim_oxygen_mode_2, 
+                        dim_oxygen_mode_3=dim_oxygen_mode_3,
+                        DMRG_numsweeps=DMRG_numsweeps,
+                        DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO)
         println("Initializing parameters...")
         save_structs(params, save_path)
         println("Saving parameters to ", save_path)
@@ -86,13 +96,20 @@ end
 #     end
 # end
 
-function correlations_run(Nx, Ny, yperiodic, μ, εd, εp, 
-                            tpd, tpp, Upd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
-                            g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
-                            DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
+function correlations_run(Nx, Ny, yperiodic, 
+                            μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
+                            ωB1g, ω1g, gB1g, gA1g, 
+                            doping, 
+                            dim_copper_mode_1, 
+                            dim_copper_mode_2, 
+                            dim_copper_mode_3,
+                            dim_oxygen_mode_1, 
+                            dim_oxygen_mode_2, 
+                            dim_oxygen_mode_3,
+                            DMRG_numsweeps, DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
                             dir_path=@__DIR__)
 
-    param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Upd)Upd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ω)ω_$(g0pp)g0pp_$(g0dd)g0dd_$(g1pd)g1pd_$(g1dp)g1dp_$(g1pp)g1pp"
+    param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Vpd)Vpd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ωB1g)ωB1g_$(ω1g)ω1g_$(gB1g)gB1g_$(gA1g)gA1g"
     save_path = joinpath(dir_path,param_stamp*".h5")
     results_save_path = joinpath(dir_path,param_stamp*"_results.h5")
 
@@ -177,5 +194,4 @@ function correlations_run(Nx, Ny, yperiodic, μ, εd, εp,
     global eq_corr.dSC_dxdx = dSC_dxdx 
     save_structs(eq_corr, results_save_path)
     println("Saving dSC correlations for py-px bond...")
-
 end
