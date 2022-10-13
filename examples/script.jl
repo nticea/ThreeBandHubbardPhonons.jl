@@ -30,12 +30,13 @@ gA1g=0.005
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
-COPPER_DIM_1 = 2 # maximum 1 phonon 
-COPPER_DIM_2 = 2 # maximum 1 phonons 
+# HERE WE HAVE TWO PHONON MODES PER UNIT CELL -- ONE ON PX and ONE ON PY 
+COPPER_DIM_1 = 1 # maximum 0 phonons 
+COPPER_DIM_2 = 1 # maximum 0 phonons 
 COPPER_DIM_3 = 1 # maximum 0 phonons 
-OXYGEN_DIM_1 = 2 # maximum 1 phonons
-OXYGEN_DIM_2 = 2 # maximum 1 phonons 
-OXYGEN_DIM_3 = 1 # maximum 1 phonons 
+OXYGEN_DIM_1 = 3 # maximum 2 phonons
+OXYGEN_DIM_2 = 1 # maximum 0 phonons 
+OXYGEN_DIM_3 = 1 # maximum 0 phonons 
 
 # DMRG parameters 
 DMRG_numsweeps = 20 # total number of iterations 

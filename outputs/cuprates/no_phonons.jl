@@ -11,7 +11,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=8
+Nx=48
 Ny=2
 yperiodic=true
 
@@ -24,17 +24,17 @@ Vpd=0
 Upp=3
 Udd=8
 doping=0.125
-ωB1g=0.1
-ω1g=0.05
-gB1g=0.01
-gA1g=0.005
+ωB1g=0
+ω1g=0
+gB1g=0
+gA1g=0
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
 COPPER_DIM_1 = 1 # maximum 0 phonons 
 COPPER_DIM_2 = 1 # maximum 0 phonons 
 COPPER_DIM_3 = 1 # maximum 0 phonons 
-OXYGEN_DIM_1 = 3 # maximum 2 phonons
+OXYGEN_DIM_1 = 1 # maximum 2 phonons
 OXYGEN_DIM_2 = 1 # maximum 0 phonons 
 OXYGEN_DIM_3 = 1 # maximum 0 phonons 
 

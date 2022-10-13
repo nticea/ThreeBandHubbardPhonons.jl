@@ -11,7 +11,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=8
+Nx=48
 Ny=2
 yperiodic=true
 
@@ -26,7 +26,7 @@ Udd=8
 doping=0.125
 ωB1g=0.1
 ω1g=0.05
-gB1g=0.01
+gB1g=0
 gA1g=0.005
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 

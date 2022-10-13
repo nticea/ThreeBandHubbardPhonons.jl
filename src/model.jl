@@ -291,6 +291,83 @@ function make_ampo_cuprates(p::Parameters, sites::Vector{Index{Vector{Pair{QN, I
     return MPO(ampo,sites)
 end
 
+function number_of_phonon_modes(p::Parameters, ψ::MPS)
+    d_idx = to_site_number(p.Ny, 1, 1, "d")
+    py_idx = to_site_number(p.Ny, 1, 1, "py")
+    px_idx = to_site_number(p.Ny, 1, 1, "px")
+    py_site = siteind(ψ, py_idx)
+    d_site = siteind(ψ, d_idx)
+    px_site = siteind(ψ, px_idx)
+    @show dim(d_site)
+    @show dim(py_site)
+    @show dim(px_site)
+end
+
+function make_ampo_cuprates_2mode(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
+    # Lattice parameters 
+    Nsites, Nx, Ny, yperiodic = p.Nsites, p.Nx, p.Ny, p.yperiodic
+    # Hubbard parameters 
+    μ, εd, εp, tpd, tpp, Vpd, Upp, Udd = p.μ, p.εd, p.εp, p.tpd, p.tpp, p.Vpd, p.Upp, p.Udd
+    # Phonon parameters 
+    ωB1g, ω1g, gB1g, gA1g = p.ωB1g, p.ω1g, p.gB1g, p.gA1g
+    dim_oxygen_mode_1= p.dim_oxygen_mode_1
+    dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
+    pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
+    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen_py", "Oxygen_px")
+
+    # make the hamiltonian 
+    ampo = OpSum()
+
+    # on-site terms 
+    μ_coefs = make_coefficients(Nx+1, Ny, εd-μ, εp-μ, εp-μ)
+    U_coefs = make_coefficients(Nx+1, Ny, Udd, Upp, Upp)
+    for (n, site_type) in zip(1:Nsites, site_labels)
+        
+        # chemical potential term
+        ampo .+= μ_coefs[n], "Ntot", n  
+        
+        # on-site repulsion
+        ampo .+= U_coefs[n], "Nupdn", n 
+
+        # phonon mode # 1 
+        if site_type == "Oxygen_px" && dim_oxygen_mode_1 > 1
+            ampo .+= ωB1g, "Nb1", n # on-site px mode 1 
+            ampo .+= gB1g, "Ntot(B1d+B1)", n # on-site px coupling mode 1 
+            ampo .+= gA1g, "Ntot(B1d+B1)", n # on-site px coupling mode 1 
+        elseif site_type == "Oxygen_py" && dim_oxygen_mode_1 > 1
+            ampo .+= ω1g, "Nb1", n # on-site py mode 1 
+            ampo .+= -gB1g, "Ntot(B1d+B1)", n # on-site py coupling mode 1 - NOTE THE NEGATIVE!
+            ampo .+= gA1g, "Ntot(B1d+B1)", n # on-site px coupling mode 1 
+        end
+    end
+
+    # repulsion copper-oxygen
+    for b in dp_lattice
+        ampo .+= Vpd, "Nup", b.s1, "Nup", b.s2
+        ampo .+= Vpd, "Ndn", b.s1, "Ndn", b.s2
+        ampo .+= Vpd, "Nup", b.s1, "Ndn", b.s2
+        ampo .+= Vpd, "Ndn", b.s1, "Nup", b.s2
+    end
+
+    # copper-oxygen hopping
+    for b in dp_lattice
+        ampo .-= b.sign*tpd, "Cdagup", b.s1, "Cup", b.s2
+        ampo .-= b.sign*tpd, "Cdagup", b.s2, "Cup", b.s1
+        ampo .-= b.sign*tpd, "Cdagdn", b.s1, "Cdn", b.s2
+        ampo .-= b.sign*tpd, "Cdagdn", b.s2, "Cdn", b.s1
+    end
+
+    # oxygen-oxygen hopping
+    for b in pp_lattice
+        ampo .-= b.sign*tpp, "Cdagup", b.s1, "Cup", b.s2
+        ampo .-= b.sign*tpp, "Cdagup", b.s2, "Cup", b.s1
+        ampo .-= b.sign*tpp, "Cdagdn", b.s1, "Cdn", b.s2
+        ampo .-= b.sign*tpp, "Cdagdn", b.s2, "Cdn", b.s1
+    end
+
+    return MPO(ampo,sites)
+end
+
 """
 This is the most generic set-up for making a 3BH model  
 """
@@ -508,7 +585,7 @@ end
 Use this function for reconstructing from scratch given site indices 
 """
 function ThreeBandModel(p::Parameters, sites::Vector{Index{Vector{Pair{QN, Int64}}}})
-    H = make_ampo_cuprates(p, sites)
+    H = make_ampo_cuprates_2mode(p, sites)
     gates = [] #TODO ! make_gates(p, sites)
     # Return the struct 
     ThreeBandModel(sites, H, gates)
@@ -727,6 +804,7 @@ function run_DMRG(HM::ThreeBandModel, p::Parameters;
 
     # Initialize the wavefunction 
     ϕ0 = initialize_wavefcn(HM,p)
+    number_of_phonon_modes(p,ϕ0)
     
     # Run DMRG 
     if p.DMRG_LBO # If performing local basis optimization
