@@ -31,9 +31,8 @@ function load_params(loadpath::String)
     f = h5open(loadpath,"r")
     d = read(f)
     return Parameters(d["N"], d["Nx"], d["Ny"], d["Nsites"], 
-            d["yperiodic"], d["doping"],d["max_phonons"], d["init_phonons"],
-            d["μ"], d["εd"],d["εp"], d["tpd"], d["tpp"], d["Vpd"],d["Upp"], d["Udd"],
-            d["ω"], d["g0pp"],d["g0dd"], d["g1pd"], d["g1dp"], d["g1pp"],
+            d["yperiodic"], d["doping"], d["init_phonons"],
+            ["μ"], ["εd"], ["εp"], ["tpd"], ["tpp"], ["Vpd"], ["Upp"], ["Udd"], ["ωB1g"],  ["ω1g"], ["gB1g"], ["gA1g"],
             d["dim_copper_mode_1"], d["dim_copper_mode_2"], d["dim_copper_mode_3"],
             d["dim_oxygen_mode_1"], d["dim_oxygen_mode_2"], d["dim_oxygen_mode_3"],
             d["DMRG_numsweeps"], d["DMRG_noise"],d["DMRG_maxdim"],
