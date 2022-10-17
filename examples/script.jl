@@ -10,7 +10,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=8
+Nx=4
 Ny=2
 yperiodic=true
 
@@ -31,15 +31,15 @@ gA1g=0.005
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
 # HERE WE HAVE TWO PHONON MODES PER UNIT CELL -- ONE ON PX and ONE ON PY 
-COPPER_DIM_1 = 1 # maximum 0 phonons 
-COPPER_DIM_2 = 1 # maximum 0 phonons 
-COPPER_DIM_3 = 1 # maximum 0 phonons 
-OXYGEN_DIM_1 = 3 # maximum 2 phonons
-OXYGEN_DIM_2 = 1 # maximum 0 phonons 
-OXYGEN_DIM_3 = 1 # maximum 0 phonons 
+COPPER_DIM_1 = 2 # maximum 0 phonons 
+COPPER_DIM_2 = 2 # maximum 0 phonons 
+COPPER_DIM_3 = 2 # maximum 0 phonons 
+OXYGEN_DIM_1 = 2 # maximum 2 phonons
+OXYGEN_DIM_2 = 2 # maximum 0 phonons 
+OXYGEN_DIM_3 = 2 # maximum 0 phonons 
 
 # DMRG parameters 
-DMRG_numsweeps = 20 # total number of iterations 
+DMRG_numsweeps = 2 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
 DMRG_maxdim = 64
 DMRG_cutoff = 1E-10
