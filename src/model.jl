@@ -671,48 +671,62 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
     productMPS(HM.sites,state_arr) 
 end
 
-function ladder_expectation(ϕ::MPS, opname::String, p::Parameters)
-    density1D = expect(ϕ, opname)
+function get_site_indices(st::String, p::Parameters)
+    site_labels = make_coefficients(p.Nx+1, p.Ny, "electron", "phonon_x", "phonon_y")[1:p.Nsites]
+    indslist = findall(x-> site_labels[x]==st, 1:p.Nsites)
+    @assert length(indslist) > 0 "Check that st (sitetype) argument is not capitalized"
+    return indslist
+end
+
+function ladder_expectation(ϕ::MPS, opname::String, p::Parameters; st::String=nothing)
+    density1D = zeros(length(ϕ))
+    indslist = get_site_indices(st, p)
+    density1D[indslist] = expect(ϕ, opname, sites=indslist)
     return reshape_into_lattice(density1D, p.Nx, p.Ny)
 end
 
-function expectation_tensor(T::ITensor, opname::String, s; normalization=1)
-    val = scalar(T * op(opname, s) * dag(prime(T, s))) / normalization
-end
+# function ladder_expectation(ϕ::MPS, opname::String, p::Parameters)
+#     density1D = expect(ϕ, opname)
+#     return reshape_into_lattice(density1D, p.Nx, p.Ny)
+# end
 
-function ladder_expectation_phonons(ϕ::MPS, p::Parameters)
-    norm2_ϕ = norm(ϕ)^2
-    sites = siteinds(ϕ)
+# function expectation_tensor(T::ITensor, opname::String, s; normalization=1)
+#     val = scalar(T * op(opname, s) * dag(prime(T, s))) / normalization
+# end
 
-    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen", "Oxygen")
-    density1D = zeros(p.Nsites, 3)
-    for (n, site_type) in zip(1:p.Nsites, site_labels)
-        # Phonon mode 1 
-        if site_type == "Copper" && p.dim_copper_mode_1 > 1
-            density1D[n,1] = expectation_tensor(ϕ[n], "Nb1", sites[n], normalization=norm2_ϕ)
-        elseif site_type=="Oxygen" && p.dim_oxygen_mode_1 > 1
-            density1D[n,1] = expectation_tensor(ϕ[n], "Nb1", sites[n], normalization=norm2_ϕ)
-        end
-        # Phonon mode 2
-        if site_type == "Copper" && p.dim_copper_mode_2 > 1
-            density1D[n,2] = expectation_tensor(ϕ[n], "Nb2", sites[n], normalization=norm2_ϕ)
-        elseif site_type=="Oxygen" && p.dim_oxygen_mode_2 > 1
-            density1D[n,2] = expectation_tensor(ϕ[n], "Nb2", sites[n], normalization=norm2_ϕ)
-        end
-        # Phonon mode 3 
-        if site_type == "Copper" && p.dim_copper_mode_3 > 1
-            density1D[n,3] = expectation_tensor(ϕ[n], "Nb3", sites[n], normalization=norm2_ϕ)
-        elseif site_type=="Oxygen" && p.dim_oxygen_mode_3 > 1
-            density1D[n,3] = expectation_tensor(ϕ[n], "Nb3", sites[n], normalization=norm2_ϕ)
-        end
-    end
-    # reshape each dimension 
-    density2D = zeros(p.Ny, p.Nx*3+2, 3)
-    for i in 1:3
-        density2D[:,:,i] = reshape_into_lattice(density1D[:,i], p.Nx, p.Ny)
-    end 
-    return density2D 
-end
+# function ladder_expectation_phonons(ϕ::MPS, p::Parameters)
+#     norm2_ϕ = norm(ϕ)^2
+#     sites = siteinds(ϕ)
+
+#     site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen", "Oxygen")
+#     density1D = zeros(p.Nsites, 3)
+#     for (n, site_type) in zip(1:p.Nsites, site_labels)
+#         # Phonon mode 1 
+#         if site_type == "Copper" && p.dim_copper_mode_1 > 1
+#             density1D[n,1] = expectation_tensor(ϕ[n], "Nb1", sites[n], normalization=norm2_ϕ)
+#         elseif site_type=="Oxygen" && p.dim_oxygen_mode_1 > 1
+#             density1D[n,1] = expectation_tensor(ϕ[n], "Nb1", sites[n], normalization=norm2_ϕ)
+#         end
+#         # Phonon mode 2
+#         if site_type == "Copper" && p.dim_copper_mode_2 > 1
+#             density1D[n,2] = expectation_tensor(ϕ[n], "Nb2", sites[n], normalization=norm2_ϕ)
+#         elseif site_type=="Oxygen" && p.dim_oxygen_mode_2 > 1
+#             density1D[n,2] = expectation_tensor(ϕ[n], "Nb2", sites[n], normalization=norm2_ϕ)
+#         end
+#         # Phonon mode 3 
+#         if site_type == "Copper" && p.dim_copper_mode_3 > 1
+#             density1D[n,3] = expectation_tensor(ϕ[n], "Nb3", sites[n], normalization=norm2_ϕ)
+#         elseif site_type=="Oxygen" && p.dim_oxygen_mode_3 > 1
+#             density1D[n,3] = expectation_tensor(ϕ[n], "Nb3", sites[n], normalization=norm2_ϕ)
+#         end
+#     end
+#     # reshape each dimension 
+#     density2D = zeros(p.Ny, p.Nx*3+2, 3)
+#     for i in 1:3
+#         density2D[:,:,i] = reshape_into_lattice(density1D[:,i], p.Nx, p.Ny)
+#     end 
+#     return density2D 
+# end
 
 function get_sweeps(p::Parameters, DMRG_numsweeps_per_save::Int)
     # Set sweep params
@@ -765,16 +779,76 @@ function get_sweeps(d::DMRGResults, DMRG_numsweeps_per_save::Union{Nothing,Int}=
     return sweeps, nsweep, noise, maxdim, cutoff 
 end
 
-function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters; 
-                    DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, 
-                    alg="divide_and_conquer", disk_save=false)
-    # Set DMRG params
-    sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(dmrg_results, DMRG_numsweeps_per_save) 
+# function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters; 
+#                     DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, 
+#                     alg="divide_and_conquer", disk_save=false)
+#     # Set DMRG params
+#     sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(dmrg_results, DMRG_numsweeps_per_save) 
     
-    # Load in the last wavefunction 
-    ϕ0 = dmrg_results.ground_state
+#     # Load in the last wavefunction 
+#     ϕ0 = dmrg_results.ground_state
+#     if p.DMRG_LBO # If performing local basis optimization
+#         @assert 1==0 "Need to load in the old Rs from a previous run"
+#         energy, ϕ, Rs = dmrg_lbo(HM.mpo, ϕ0, sweeps, alg=alg, LBO=true, 
+#                                     max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
+#     else
+#         if disk_save
+#             energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg, write_when_maxdim_exceeds=p.DMRG_maxdim)
+#         else
+#             energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
+#         end
+#         Rs = 0
+#     end
+
+#     # compute some quantities
+#     entropy = compute_entropy(ϕ, p.mid)
+#     charge_density = ladder_expectation(ϕ, "Ntot", p)
+#     spin_density = ladder_expectation(ϕ, "Sz", p)
+#     phonon_density = ladder_expectation_phonons(ϕ, p)
+#     return DMRGResults(nsweep, maxdim, cutoff, noise, ϕ, energy, entropy, 
+#                         Rs, charge_density, phonon_density, spin_density)
+# end
+
+# function run_DMRG(HM::ThreeBandModel, p::Parameters; 
+#                     DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, 
+#                     alg="divide_and_conquer", disk_save=false)
+    
+#     # Set DMRG params
+#     sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(p, DMRG_numsweeps_per_save)
+
+#     # Initialize the wavefunction 
+#     ϕ0 = initialize_wavefcn(HM,p)
+#     number_of_phonon_modes(p,ϕ0)
+    
+#     # Run DMRG 
+#     if p.DMRG_LBO # If performing local basis optimization
+#         energy, ϕ, Rs = dmrg_lbo(HM.mpo, ϕ0, sweeps, alg=alg, LBO=true, 
+#                                     max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
+#     else
+#         if disk_save
+#             energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg, write_when_maxdim_exceeds=p.DMRG_maxdim)
+#         else
+#             energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
+#         end
+#         Rs = 0
+#     end
+
+#     # compute some quantities
+#     entropy = compute_entropy(ϕ, p.mid)
+#     charge_density = ladder_expectation(ϕ, "Ntot", p)
+#     spin_density = ladder_expectation(ϕ, "Sz", p)
+#     phonon_density = ladder_expectation_phonons(ϕ, p)
+
+#     return DMRGResults(nsweep, maxdim, cutoff, noise, ϕ, energy, entropy, 
+#                         Rs, charge_density, phonon_density, spin_density)
+# end
+
+
+function _run_DMRG(HM::BipolaronModel, p::Parameters, ϕ0::MPS, sweeps, nsweep, noise, maxdim, cutoff,
+                    alg, disk_save)
+    
     if p.DMRG_LBO # If performing local basis optimization
-        @assert 1==0 "Need to load in the old Rs from a previous run"
+        @assert 1==0 "Not yet implemented"
         energy, ϕ, Rs = dmrg_lbo(HM.mpo, ϕ0, sweeps, alg=alg, LBO=true, 
                                     max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
     else
@@ -786,16 +860,35 @@ function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters;
         Rs = 0
     end
 
-    # compute some quantities
-    entropy = compute_entropy(ϕ, p.mid)
-    charge_density = ladder_expectation(ϕ, "Ntot", p)
-    spin_density = ladder_expectation(ϕ, "Sz", p)
-    phonon_density = ladder_expectation_phonons(ϕ, p)
+    # Entropy 
+    entropy = compute_entropy(ϕ, ceil(Int,p.Nsites/2))
+
+    # Electron site densities
+    charge_density = ladder_expectation(ϕ, "ntot", p, st="electron")
+    spin_density = ladder_expectation(ϕ, "Sz", p, st="electron")
+
+    # Phonon site densities 
+    phonon_density_x = ladder_expectation(ϕ, "N", p, st="phonon_x")
+    phonon_density_y = ladder_expectation(ϕ, "N", p, st="phonon_y")
+    phonon_density = phonon_density_x + phonon_density_y
+    
     return DMRGResults(nsweep, maxdim, cutoff, noise, ϕ, energy, entropy, 
                         Rs, charge_density, phonon_density, spin_density)
 end
 
-function run_DMRG(HM::ThreeBandModel, p::Parameters; 
+function run_DMRG(dmrg_results::DMRGResults, HM::BipolaronModel, p::Parameters; 
+                    DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, 
+                    alg="divide_and_conquer", disk_save=false)
+    # Set DMRG params
+    sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(dmrg_results, DMRG_numsweeps_per_save) 
+    
+    # Load in the last wavefunction 
+    ϕ0 = dmrg_results.ground_state
+
+    _run_DMRG(HM, p, ϕ0, sweeps, nsweep, noise, maxdim, cutoff, alg, disk_save)
+end
+
+function run_DMRG(HM::BipolaronModel, p::Parameters; 
                     DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, 
                     alg="divide_and_conquer", disk_save=false)
     
@@ -804,29 +897,8 @@ function run_DMRG(HM::ThreeBandModel, p::Parameters;
 
     # Initialize the wavefunction 
     ϕ0 = initialize_wavefcn(HM,p)
-    number_of_phonon_modes(p,ϕ0)
-    
-    # Run DMRG 
-    if p.DMRG_LBO # If performing local basis optimization
-        energy, ϕ, Rs = dmrg_lbo(HM.mpo, ϕ0, sweeps, alg=alg, LBO=true, 
-                                    max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
-    else
-        if disk_save
-            energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg, write_when_maxdim_exceeds=p.DMRG_maxdim)
-        else
-            energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
-        end
-        Rs = 0
-    end
 
-    # compute some quantities
-    entropy = compute_entropy(ϕ, p.mid)
-    charge_density = ladder_expectation(ϕ, "Ntot", p)
-    spin_density = ladder_expectation(ϕ, "Sz", p)
-    phonon_density = ladder_expectation_phonons(ϕ, p)
-
-    return DMRGResults(nsweep, maxdim, cutoff, noise, ϕ, energy, entropy, 
-                        Rs, charge_density, phonon_density, spin_density)
+    _run_DMRG(HM, p, ϕ0, sweeps, nsweep, noise, maxdim, cutoff, alg, disk_save)
 end
 
 ## CORRELATION FUNCTIONS ## 
