@@ -9,7 +9,7 @@ using ITensors.HDF5
 
 # Load the results in 
 loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/cuprates/48Nx_2Ny_3εp_1tpd_0.5tpp_0Vpd_3Upp_8Udd_0.125doping_0.1ωB1g_0.05ω1g_0gB1g_0.005gA1g_results.h5"
-loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/cuprates/48Nx_2Ny_3εp_1tpd_0.5tpp_0Vpd_3Upp_8Udd_0.125doping_0.1ωB1g_0.05ω1g_0.01gB1g_0.005gA1g_results.h5"
+#loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/cuprates/48Nx_2Ny_3εp_1tpd_0.5tpp_0Vpd_3Upp_8Udd_0.125doping_0.1ωB1g_0.05ω1g_0.01gB1g_0.005gA1g_results.h5"
 
 println("Loading data...")
 dmrg_results = load_dmrg_results_minimal(loadpath)
