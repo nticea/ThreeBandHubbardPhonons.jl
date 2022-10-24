@@ -19,8 +19,12 @@ function plot_charge_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}
     title!("Electron density")
 end
 
-function plot_phonon_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}; ylims=nothing)
-    n = dmrg_results.phonon_density'
+function plot_phonon_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}, mode::Int; ylims=nothing)
+    n = dmrg_results.phonon_density[:,:,mode]
+    _plot_phonon_density(n', ylims=ylims)
+end
+
+function _plot_phonon_density(n::AbstractArray; ylims=nothing)
     n = n[1:end-2,:] # remove the last rung
     plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
     plot!(1:length(n[2:3:end,1]), n[2:3:end,:], label="d")

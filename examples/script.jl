@@ -23,28 +23,26 @@ Vpd=0
 Upp=3
 Udd=8
 doping=0.125
-ωB1g=0.1
-ω1g=0.05
-gB1g=0.01
-gA1g=0.005
+ωB1g=0#0.1
+ω1g=0#0.05
+gB1g=0#0.01
+gA1g=0#0.005
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
 # HERE WE HAVE TWO PHONON MODES PER UNIT CELL -- ONE ON PX and ONE ON PY 
-COPPER_DIM_1 = 2 # maximum 0 phonons 
-COPPER_DIM_2 = 2 # maximum 0 phonons 
-COPPER_DIM_3 = 2 # maximum 0 phonons 
-OXYGEN_DIM_1 = 2 # maximum 2 phonons
-OXYGEN_DIM_2 = 2 # maximum 0 phonons 
-OXYGEN_DIM_3 = 2 # maximum 0 phonons 
+COPPER_DIM_1 = 1 # maximum 0 phonons 
+COPPER_DIM_2 = 1 # maximum 0 phonons 
+COPPER_DIM_3 = 1 # maximum 0 phonons 
+OXYGEN_DIM_1 = 1 # maximum 2 phonons
+OXYGEN_DIM_2 = 1 # maximum 0 phonons 
+OXYGEN_DIM_3 = 1 # maximum 0 phonons 
 
 # DMRG parameters 
-DMRG_numsweeps = 2 # total number of iterations 
+DMRG_numsweeps = 15 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
 DMRG_maxdim = 64
 DMRG_cutoff = 1E-10
-DMRG_LBO = false
-max_lbo_dim = 12 
 
 # Initialize 
 println("Initializing...")
@@ -56,7 +54,7 @@ params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, 
                     dim_oxygen_mode_1=OXYGEN_DIM_1, dim_oxygen_mode_2=OXYGEN_DIM_2, 
                     dim_oxygen_mode_3=OXYGEN_DIM_3,
                     DMRG_numsweeps=DMRG_numsweeps,
-                    DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO);
+                    DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff);
 # The Hamiltonian MPO 
 TBHModel = ThreeBandModel(params);
 
