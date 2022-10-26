@@ -3,7 +3,8 @@ using Statistics: mean
 include("lattices/cuprate_lattice.jl")
 #include("sites/site_hubbholst.jl")
 include("sites/threeband/copper.jl")
-include("sites/threeband/oxygen.jl")
+include("sites/threeband/oxypx.jl")
+include("sites/threeband/oxypy.jl")
 include("lattices/visualize_lattice.jl")
 include("dmrg_lbo.jl")
 
@@ -26,18 +27,21 @@ struct Parameters
     Vpd::Real
     Upp::Real
     Udd::Real
-    ωB1g::Real 
-    ω1g::Real
-    gB1g::Real
-    gA1g::Real
+    ωB1::Real 
+    ωA1::Real
+    gB1::Real
+    gA1::Real
 
     # phonon modes 
     dim_copper_mode_1::Int
     dim_copper_mode_2::Int
     dim_copper_mode_3::Int
-    dim_oxygen_mode_1::Int
-    dim_oxygen_mode_2::Int
-    dim_oxygen_mode_3::Int
+    dim_oxygen_x_mode_1::Int
+    dim_oxygen_x_mode_2::Int
+    dim_oxygen_x_mode_3::Int
+    dim_oxygen_y_mode_1::Int
+    dim_oxygen_y_mode_2::Int
+    dim_oxygen_y_mode_3::Int
 
     # DMRG 
     DMRG_numsweeps
@@ -128,35 +132,38 @@ function parameters(;Nx::Int, Ny::Int,
     Vpd=0,
     Upp=3,
     Udd=8,
-    ωB1g::Real, # New parameters for the model 
-    ω1g::Real,
-    gB1g::Real, 
-    gA1g::Real,
+    ωB1::Real, # New parameters for the model 
+    ωA1::Real,
+    gB1::Real, 
+    gA1::Real,
 
     # phonon modes 
     dim_copper_mode_1::Int,
     dim_copper_mode_2::Int,
     dim_copper_mode_3::Int,
-    dim_oxygen_mode_1::Int,
-    dim_oxygen_mode_2::Int,
-    dim_oxygen_mode_3::Int,
+    dim_oxygen_x_mode_1::Int,
+    dim_oxygen_x_mode_2::Int,
+    dim_oxygen_x_mode_3::Int,
+    dim_oxygen_y_mode_1::Int,
+    dim_oxygen_y_mode_2::Int,
+    dim_oxygen_y_mode_3::Int,
 
     DMRG_numsweeps::Int=20, DMRG_noise=nothing, 
     DMRG_maxdim=nothing, DMRG_cutoff=nothing, DMRG_LBO=false,
     max_LBO_dim=nothing, min_LBO_dim=4,
     T::Int=25, τ::Real=0.1, TEBD_cutoff=1E-14, TEBD_maxdim=400, TEBD_LBO=false)
 
-    if isnothing(ωB1g)
-        ωB1g = 0.5*tpd
+    if isnothing(ωB1)
+        ωB1 = 0.5*tpd
     end
-    if isnothing(ω1g)
-        ω1g = 0.05*tpd
+    if isnothing(ωA1)
+        ωA1 = 0.05*tpd
     end
-    if isnothing(gB1g)
-        gB1g = 0.01*tpd
+    if isnothing(gB1)
+        gB1 = 0.01*tpd
     end
-    if isnothing(gA1g)
-        gA1g = 0.05*tpd
+    if isnothing(gA1)
+        gA1 = 0.05*tpd
     end
 
     if TEBD_LBO
@@ -180,9 +187,10 @@ function parameters(;Nx::Int, Ny::Int,
     mid = ceil(Int,Nsites/2) # midpoint of the DMRG chain 
 
     return Parameters(N, Nx, Ny, Nsites, yperiodic, doping, init_phonons,
-            μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, ωB1g, ω1g, gB1g, gA1g,
+            μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, ωB1, ωA1, gB1, gA1,
             dim_copper_mode_1, dim_copper_mode_2, dim_copper_mode_3,
-            dim_oxygen_mode_1, dim_oxygen_mode_2, dim_oxygen_mode_3,
+            dim_oxygen_x_mode_1, dim_oxygen_x_mode_2, dim_oxygen_x_mode_3,
+            dim_oxygen_y_mode_1, dim_oxygen_y_mode_2, dim_oxygen_y_mode_3,
             DMRG_numsweeps, DMRG_noise, DMRG_maxdim, DMRG_cutoff, DMRG_LBO,
             max_LBO_dim, min_LBO_dim, mid, T, τ, TEBD_cutoff, TEBD_maxdim, TEBD_LBO)
 end
@@ -219,10 +227,12 @@ function make_ampo_cuprates(p::Parameters, sites::Vector{Index{Vector{Pair{QN, I
     # Hubbard parameters 
     μ, εd, εp, tpd, tpp, Vpd, Upp, Udd = p.μ, p.εd, p.εp, p.tpd, p.tpp, p.Vpd, p.Upp, p.Udd
     # Phonon parameters 
-    ωB1g, ω1g, gB1g, gA1g = p.ωB1g, p.ω1g, p.gB1g, p.gA1g
+    ωB1, ωA1, gB1, gA1 = p.ωB1, p.ωA1, p.gB1, p.gA1
     dim_copper_mode_1, dim_copper_mode_2, dim_copper_mode_3,
-        dim_oxygen_mode_1, dim_oxygen_mode_2, dim_oxygen_mode_3 = p.dim_copper_mode_1, p.dim_copper_mode_2, p.dim_copper_mode_3,
-                                                                    p.dim_oxygen_mode_1, p.dim_oxygen_mode_2, p.dim_oxygen_mode_3
+    dim_oxygen_x_mode_1, dim_oxygen_x_mode_2, dim_oxygen_x_mode_3,
+    dim_oxygen_y_mode_1, dim_oxygen_y_mode_2, dim_oxygen_y_mode_3 = p.dim_copper_mode_1, p.dim_copper_mode_2, p.dim_copper_mode_3,
+                                                                    p.dim_oxygen_x_mode_1, p.dim_oxygen_x_mode_2, p.dim_oxygen_x_mode_3,
+                                                                    p.dim_oxygen_y_mode_1, p.dim_oxygen_y_mode_2, p.dim_oxygen_y_mode_3
     dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen_py", "Oxygen_px")
@@ -243,24 +253,24 @@ function make_ampo_cuprates(p::Parameters, sites::Vector{Index{Vector{Pair{QN, I
 
         # phonon mode # 1 
         if site_type == "Copper" && dim_copper_mode_1 > 1
-            ampo .+= ωB1g, "Nb1", n # on-site d mode 1 
+            ampo .+= ωB1, "Nb1", n # on-site d mode 1 
         elseif site_type == "Oxygen_px" && dim_oxygen_mode_1 > 1
-            ampo .+= ωB1g, "Nb1", n # on-site px mode 1 
-            ampo .+= gB1g, "Ntot(B1d+B1)", n # on-site px coupling mode 1 
+            ampo .+= ωB1, "Nb1", n # on-site px mode 1 
+            ampo .+= gB1, "Ntot(B1d+B1)", n # on-site px coupling mode 1 
         elseif site_type == "Oxygen_py" && dim_oxygen_mode_1 > 1
-            ampo .+= ωB1g, "Nb1", n # on-site py mode 1 
-            ampo .+= -gB1g, "Ntot(B1d+B1)", n # on-site py coupling mode 1 - NOTE THE NEGATIVE!
+            ampo .+= ωB1, "Nb1", n # on-site py mode 1 
+            ampo .+= -gB1, "Ntot(B1d+B1)", n # on-site py coupling mode 1 - NOTE THE NEGATIVE!
         end
         
         # phonon mode # 2
         if site_type == "Copper" && dim_copper_mode_2 > 1
-            ampo .+= ω1g, "Nb2", n # on-site d mode 2 
+            ampo .+= ωA1, "Nb2", n # on-site d mode 2 
         elseif site_type == "Oxygen_px" && dim_oxygen_mode_2 > 1
-            ampo .+= ω1g, "Nb2", n # on-site px mode 2
-            ampo .+= gA1g, "Ntot(B2d+B2)", n # on-site px coupling mode 2
+            ampo .+= ωA1, "Nb2", n # on-site px mode 2
+            ampo .+= gA1, "Ntot(B2d+B2)", n # on-site px coupling mode 2
         elseif site_type == "Oxygen_py" && dim_oxygen_mode_2 > 1
-            ampo .+= ω1g, "Nb2", n # on-site py mode 2
-            ampo .+= gA1g, "Ntot(B2d+B2)", n # on-site py coupling mode 2
+            ampo .+= ωA1, "Nb2", n # on-site py mode 2
+            ampo .+= gA1, "Ntot(B2d+B2)", n # on-site py coupling mode 2
         end
     end
 
@@ -309,8 +319,8 @@ function make_ampo_cuprates_2mode(p::Parameters, sites::Vector{Index{Vector{Pair
     # Hubbard parameters 
     μ, εd, εp, tpd, tpp, Vpd, Upp, Udd = p.μ, p.εd, p.εp, p.tpd, p.tpp, p.Vpd, p.Upp, p.Udd
     # Phonon parameters 
-    ωB1g, ω1g, gB1g, gA1g = p.ωB1g, p.ω1g, p.gB1g, p.gA1g
-    dim_oxygen_mode_1= p.dim_oxygen_mode_1
+    ωB1, ωA1, gB1, gA1 = p.ωB1, p.ωA1, p.gB1, p.gA1
+    dim_oxygen_x_mode_1, dim_oxygen_y_mode_1  = p.dim_oxygen_x_mode_1, p.dim_oxygen_y_mode_1
     dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen_py", "Oxygen_px")
@@ -329,15 +339,32 @@ function make_ampo_cuprates_2mode(p::Parameters, sites::Vector{Index{Vector{Pair
         # on-site repulsion
         ampo .+= U_coefs[n], "Nupdn", n 
 
-        # phonon mode # 1 
-        if site_type == "Oxygen_px" && dim_oxygen_mode_1 > 1
-            ampo .+= ωB1g, "Nb1", n # on-site px mode 1 
-            ampo .+= gB1g, "Ntot(B1d+B1)", n # on-site px coupling mode 1 
-            ampo .+= gA1g, "Ntot(B1d+B1)", n # on-site px coupling mode 1 
-        elseif site_type == "Oxygen_py" && dim_oxygen_mode_1 > 1
-            ampo .+= ω1g, "Nb1", n # on-site py mode 1 
-            ampo .+= -gB1g, "Ntot(B1d+B1)", n # on-site py coupling mode 1 - NOTE THE NEGATIVE!
-            ampo .+= gA1g, "Ntot(B1d+B1)", n # on-site px coupling mode 1 
+        # In this set-up, the A1 mode will be on px and the B1 mode will be on py 
+        # this is arbitrary!! It doesn't actually matter at all 
+        if site_type == "Oxygen_px" && dim_oxygen_x_mode_1 > 1
+            ampo .+= ωA1, "Nb1", n # Einstein mode 1 
+        elseif site_type == "Oxygen_py" && dim_oxygen_y_mode_1 > 1
+            ampo .+= ωB1, "Nb1", n # Einstein mode 2 
+        end
+    end
+
+    # iterate across unit cells 
+    for n in 1:p.N
+        # if we have gA1 coupling 
+        if gA1 > 0 && dim_oxygen_x_mode_1 > 1 
+            ph_site = to_site_number(p.Ny, n, "px")
+            ex_site = to_site_number(p.Ny, n, "px")
+            ey_site = to_site_number(p.Ny, n, "py")
+            ampo += gA1, "B1dag+B1", ph_site, "Ntot", ex_site
+            ampo += gA1, "B1dag+B1", ph_site, "Ntot", ey_site
+        end 
+        # if we have gB1 coupling 
+        if gB1 > 0 && dim_oxygen_y_mode_1 > 1
+            ph_site = to_site_number(p.Ny, n, "py")
+            ex_site = to_site_number(p.Ny, n, "px")
+            ey_site = to_site_number(p.Ny, n, "py")
+            ampo += gB1, "B1dag+B1", ph_site, "Ntot", ex_site
+            ampo += -gB1, "B1dag+B1", ph_site, "Ntot", ey_site
         end
     end
 
@@ -603,7 +630,7 @@ Make a three-band Hubbard model with phonons given a set of input parameters
 function ThreeBandModel(p::Parameters)
     # sites = siteinds("HubHolst", p.Nsites; dim=p.max_phonons+1)
     # sites = siteinds("TBHSite", p.Nsites)
-    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen", "Oxygen")
+    site_labels = make_coefficients(Nx+1, Ny, "Copper", "OxyPx", "OxyPy")
     sites = [siteinds(site_labels[i], 1)[1] for i in 1:p.Nsites]
     return ThreeBandModel(p, sites)
 end
@@ -920,37 +947,41 @@ end
 
 function compute_all_equilibrium_correlations(dmrg_results::DMRGResults, 
                                             HM::ThreeBandModel, p::Parameters;
-                                            buffer=1)
+                                            buffer=nothing)
 
+    if isnothing(buffer)
+        buffer = floor(Int, p.Nx/5)
+    end
     # Compute spin and charge correlations
     println("Computing spin correlations for dx-dx bond")
-    start, stop, spin_corr = compute_equilibrium_onsite_correlation(dmrg_results,HM,p,"dx-dx","spin")
+    start, stop, spin_corr = compute_equilibrium_onsite_correlation(dmrg_results,HM,p,"dx-dx","spin", buffer=buffer)
 
     println("Computing charge correlations for dx-dx bond")
-    _,_,charge_corr = compute_equilibrium_onsite_correlation(dmrg_results,HM,p,"dx-dx","charge")
+    _,_,charge_corr = compute_equilibrium_onsite_correlation(dmrg_results,HM,p,"dx-dx","charge", buffer=buffer)
 
     # Compute d-wave pairfield correlations 
-    pairfield_corrs = compute_equilibrium_pairfield_correlations(dmrg_results, HM, p)
+    pairfield_corrs = compute_equilibrium_pairfield_correlations(dmrg_results, HM, p, buffer=buffer)
     
     return EquilibriumCorrelations(start, stop, spin_corr, charge_corr, pairfield_corrs...)
 end
 
 function compute_equilibrium_pairfield_correlations(dmrg_results::DMRGResults, 
-                                                HM::ThreeBandModel, p::Parameters)
+                                                HM::ThreeBandModel, p::Parameters,
+                                                ;buffer=nothing)
 
     # There are 6 pair-field correlations to compute 
     println("Computing dSC correlations for dx-dx bond")
-    _,_,dxdx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "dSC")
+    _,_,dxdx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "dSC", buffer=buffer)
     println("Computing dSC correlations for d-px bond")
-    _,_,dpx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "d-px", "d-px", "dSC")
+    _,_,dpx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "d-px", "d-px", "dSC", buffer=buffer)
     println("Computing dSC correlations for dy-dy bond")
-    _,_,dydy = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dy-dy", "dy-dy", "dSC")
+    _,_,dydy = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dy-dy", "dy-dy", "dSC", buffer=buffer)
     println("Computing dSC correlations for py-d bond")
-    _,_,pyd = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-d", "py-d", "dSC")
+    _,_,pyd = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-d", "py-d", "dSC", buffer=buffer)
     println("Computing dSC correlations for py-px bond")
-    _,_,pypx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-px", "py-px", "dSC")
+    _,_,pypx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-px", "py-px", "dSC", buffer=buffer)
     println("Computing dSC correlations for py1-px2 bond")
-    _,_,py1px2 = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py1-px2", "py1-px2", "dSC")
+    _,_,py1px2 = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py1-px2", "py1-px2", "dSC", buffer=buffer)
 
     return [dxdx, dpx, dydy, pyd, pypx, py1px2] # transpose for compatibiity w plotting fcn
 end
@@ -1000,8 +1031,12 @@ end
 function compute_equilibrium_onsite_correlation(dmrg_results::DMRGResults, 
                                                 HM::ThreeBandModel, p::Parameters,
                                                 bondtype::String, corrtype::String;
-                                                buffer=1, row=1)
+                                                buffer=nothing, row=1)
+
     Nx, Ny = p.Nx, p.Ny
+    if isnothing(buffer)
+        buffer = floor(Int, Nx/5)
+    end
     ϕ = copy(dmrg_results.ground_state)
     Nsites = length(ϕ)
     start = 4 + (buffer-1)*3 # discard buffer # of unit cells 
@@ -1022,8 +1057,11 @@ end
 function compute_equilibrium_pairfield_correlation(dmrg_results::DMRGResults, 
                                                 HM::ThreeBandModel, p::Parameters,
                                                 bond1::String, bond2::String, SCtype::String;
-                                                buffer=1, row=1)
+                                                buffer=nothing, row=1)
     Nx, Ny = p.Nx, p.Ny
+    if isnothing(buffer)
+        buffer = floor(Int, Nx/5)
+    end
     ϕ = copy(dmrg_results.ground_state)
     Nsites = length(ϕ)
     start = 4 + (buffer-1)*3 # discard buffer # of unit cells 

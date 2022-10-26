@@ -32,9 +32,10 @@ function load_params(loadpath::String)
     d = read(f)
     return Parameters(d["N"], d["Nx"], d["Ny"], d["Nsites"], 
             d["yperiodic"], d["doping"], d["init_phonons"],
-            d["μ"], d["εd"], d["εp"], d["tpd"], d["tpp"], d["Vpd"], d["Upp"], d["Udd"], d["ωB1g"],  d["ω1g"], d["gB1g"], d["gA1g"],
+            d["μ"], d["εd"], d["εp"], d["tpd"], d["tpp"], d["Vpd"], d["Upp"], d["Udd"], d["ωB1"],  d["ωA1"], d["gB1"], d["gA1"],
             d["dim_copper_mode_1"], d["dim_copper_mode_2"], d["dim_copper_mode_3"],
-            d["dim_oxygen_mode_1"], d["dim_oxygen_mode_2"], d["dim_oxygen_mode_3"],
+            d["dim_oxygen_x_mode_1"], d["dim_oxygen_x_mode_2"], d["dim_oxygen_x_mode_3"],
+            d["dim_oxygen_y_mode_1"], d["dim_oxygen_y_mode_2"], d["dim_oxygen_y_mode_3"],
             d["DMRG_numsweeps"], d["DMRG_noise"],d["DMRG_maxdim"],
             d["DMRG_cutoff"], d["DMRG_LBO"], d["max_LBO_dim"],d["min_LBO_dim"],
             d["mid"], d["T"], d["τ"], 

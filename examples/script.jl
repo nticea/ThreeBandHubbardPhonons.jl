@@ -23,20 +23,23 @@ Vpd=0
 Upp=3
 Udd=8
 doping=0.125
-ωB1g=0#0.1
-ω1g=0#0.05
-gB1g=0#0.01
-gA1g=0#0.005
+ωB1=0#0.1
+ωA1=0#0.05
+gB1=0#0.01
+gA1=0#0.005
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
 # HERE WE HAVE TWO PHONON MODES PER UNIT CELL -- ONE ON PX and ONE ON PY 
-COPPER_DIM_1 = 1 # maximum 0 phonons 
-COPPER_DIM_2 = 1 # maximum 0 phonons 
-COPPER_DIM_3 = 1 # maximum 0 phonons 
-OXYGEN_DIM_1 = 1 # maximum 2 phonons
-OXYGEN_DIM_2 = 1 # maximum 0 phonons 
-OXYGEN_DIM_3 = 1 # maximum 0 phonons 
+COPPER_DIM_1 = 1 
+COPPER_DIM_2 = 1 
+COPPER_DIM_3 = 1 
+PX_DIM_1 = 1 
+PX_DIM_2 = 1 
+PX_DIM_3 = 1 
+PY_DIM_1 = 1 
+PY_DIM_2 = 1 
+PY_DIM_3 = 1 
 
 # DMRG parameters 
 DMRG_numsweeps = 15 # total number of iterations 
@@ -48,11 +51,12 @@ DMRG_cutoff = 1E-10
 println("Initializing...")
 params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, 
                     tpp=tpp, Vpd=Vpd, Upp=Upp, Udd=Udd, 
-                    ωB1g=ωB1g, ω1g=ω1g, gB1g=gB1g, gA1g=gA1g,doping=doping, 
+                    ωB1=ωB1, ωA1=ωA1, gB1=gB1, gA1=gA1,doping=doping, 
                     dim_copper_mode_1=COPPER_DIM_1, dim_copper_mode_2=COPPER_DIM_2, 
                     dim_copper_mode_3=COPPER_DIM_3,
-                    dim_oxygen_mode_1=OXYGEN_DIM_1, dim_oxygen_mode_2=OXYGEN_DIM_2, 
-                    dim_oxygen_mode_3=OXYGEN_DIM_3,
+                    dim_oxygen_x_mode_1=PX_DIM_1, dim_oxygen_x_mode_2=PX_DIM_2, 
+                    dim_oxygen_x_mode_3=PX_DIM_3, dim_oxygen_y_mode_1=PY_DIM_1, 
+                    dim_oxygen_y_mode_2=PY_DIM_2, dim_oxygen_y_mode_3=PY_DIM_3,
                     DMRG_numsweeps=DMRG_numsweeps,
                     DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff);
 # The Hamiltonian MPO 

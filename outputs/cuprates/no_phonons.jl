@@ -24,19 +24,22 @@ Vpd=0
 Upp=3
 Udd=8
 doping=0.125
-ωB1g=0
-ω1g=0
-gB1g=0
-gA1g=0
+ωB1=0
+ωA1=0
+gB1=0
+gA1=0
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
-COPPER_DIM_1 = 1 # maximum 0 phonons 
-COPPER_DIM_2 = 1 # maximum 0 phonons 
-COPPER_DIM_3 = 1 # maximum 0 phonons 
-OXYGEN_DIM_1 = 1 # maximum 2 phonons
-OXYGEN_DIM_2 = 1 # maximum 0 phonons 
-OXYGEN_DIM_3 = 1 # maximum 0 phonons 
+COPPER_DIM_1 = 1 
+COPPER_DIM_2 = 1 
+COPPER_DIM_3 = 1 
+PX_DIM_1 = 1 
+PX_DIM_2 = 1 
+PX_DIM_3 = 1 
+PY_DIM_1 = 1 
+PY_DIM_2 = 1 
+PY_DIM_3 = 1 
 
 # DMRG parameters 
 DMRG_numsweeps = 80 # total number of iterations 
@@ -51,21 +54,21 @@ DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to 
 println("Running DMRG...")
 dmrg_run(Nx, Ny, yperiodic, 
         μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
-        ωB1g, ω1g, gB1g, gA1g, 
+        ωB1, ωA1, gB1, gA1, 
         doping, 
         COPPER_DIM_1, 
         COPPER_DIM_2, 
         COPPER_DIM_3,
-        OXYGEN_DIM_1, 
-        OXYGEN_DIM_2, 
-        OXYGEN_DIM_3,
+        PX_DIM_1, 
+        PX_DIM_2, 
+        PX_DIM_3,
+        PY_DIM_1, 
+        PY_DIM_2, 
+        PY_DIM_3,
         DMRG_numsweeps, DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
         disk_save=true,
         dir_path=@__DIR__)
 
 println("Computing correlations...")
-correlations_run(Nx, Ny, yperiodic, μ, εd, εp, 
-        tpd, tpp, Vpd, Upp, Udd, ω, g0pp, g0dd, g1pd, 
-        g1dp, g1pp, doping, max_phonons, DMRG_numsweeps,
-        DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
-        dir_path=@__DIR__)
+correlations_run(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
+                ωB1, ωA1, gB1, gA1, doping; dir_path=@__DIR__)
