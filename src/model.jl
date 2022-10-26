@@ -235,7 +235,7 @@ function make_ampo_cuprates(p::Parameters, sites::Vector{Index{Vector{Pair{QN, I
                                                                     p.dim_oxygen_y_mode_1, p.dim_oxygen_y_mode_2, p.dim_oxygen_y_mode_3
     dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
-    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen_py", "Oxygen_px")
+    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen_px", "Oxygen_py")
 
     # make the hamiltonian 
     ampo = OpSum()
@@ -323,7 +323,7 @@ function make_ampo_cuprates_2mode(p::Parameters, sites::Vector{Index{Vector{Pair
     dim_oxygen_x_mode_1, dim_oxygen_y_mode_1  = p.dim_oxygen_x_mode_1, p.dim_oxygen_y_mode_1
     dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
-    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen_py", "Oxygen_px")
+    site_labels = make_coefficients(Nx+1, Ny, "Copper", "Oxygen_px", "Oxygen_py")
 
     # make the hamiltonian 
     ampo = OpSum()
