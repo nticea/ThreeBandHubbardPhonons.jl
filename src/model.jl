@@ -773,7 +773,7 @@ function _run_DMRG(HM::ThreeBandModel, p::Parameters, ϕ0::MPS, sweeps, nsweep, 
     spin_density = ladder_expectation(ϕ, "Sz", p)
 
     # Phonon site densities 
-    phonon_density = zeros(size(spin_density)...,3)
+    phonon_density = zeros(size(spin_density)...,9)
     # Copper 
     if p.dim_copper_mode_1>1
         phonon_density[:,:,1] += ladder_expectation(ϕ, "Nb1", p, st="copper")
@@ -784,18 +784,25 @@ function _run_DMRG(HM::ThreeBandModel, p::Parameters, ϕ0::MPS, sweeps, nsweep, 
     if p.dim_copper_mode_3>1
         phonon_density[:,:,3] += ladder_expectation(ϕ, "Nb3", p, st="copper")
     end
-    # Oxygen 
-    if p.dim_oxygen_mode_1>1
-        phonon_density[:,:,1] += ladder_expectation(ϕ, "Nb1", p, st="oxygen_x")
-        phonon_density[:,:,1] += ladder_expectation(ϕ, "Nb1", p, st="oxygen_y")
+    # Oxygen x
+    if p.dim_oxygen_x_mode_1>1
+        phonon_density[:,:,4] += ladder_expectation(ϕ, "Nb1", p, st="oxygen_x")
     end
-    if p.dim_oxygen_mode_2>1
-        phonon_density[:,:,2] += ladder_expectation(ϕ, "Nb2", p, st="oxygen_x")
-        phonon_density[:,:,2] += ladder_expectation(ϕ, "Nb2", p, st="oxygen_y")
+    if p.dim_oxygen_x_mode_2>1
+        phonon_density[:,:,5] += ladder_expectation(ϕ, "Nb2", p, st="oxygen_x")
     end
-    if p.dim_oxygen_mode_3>1
-        phonon_density[:,:,3] += ladder_expectation(ϕ, "Nb3", p, st="oxygen_x")
-        phonon_density[:,:,3] += ladder_expectation(ϕ, "Nb3", p, st="oxygen_y")
+    if p.dim_oxygen_x_mode_3>1
+        phonon_density[:,:,6] += ladder_expectation(ϕ, "Nb3", p, st="oxygen_x")
+    end
+    # Oxygen y
+    if p.dim_oxygen_y_mode_1>1
+        phonon_density[:,:,7] += ladder_expectation(ϕ, "Nb1", p, st="oxygen_y")
+    end
+    if p.dim_oxygen_y_mode_2>1
+        phonon_density[:,:,8] += ladder_expectation(ϕ, "Nb2", p, st="oxygen_y")
+    end
+    if p.dim_oxygen_y_mode_3>1
+        phonon_density[:,:,9] += ladder_expectation(ϕ, "Nb3", p, st="oxygen_y")
     end
     
     return DMRGResults(nsweep, maxdim, cutoff, noise, ϕ, energy, entropy, 

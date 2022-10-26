@@ -50,7 +50,7 @@ DMRG_LBO = false
 max_lbo_dim = 12 
 
 ## SAVE OUT INFO ##
-DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to DMRG_numsweeps
+DMRG_numsweeps_per_save = 1 # If don't want to save regularly, just set this to DMRG_numsweeps
 println("Running DMRG...")
 dmrg_run(Nx, Ny, yperiodic, 
         μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 

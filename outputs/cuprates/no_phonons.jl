@@ -11,7 +11,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=48
+Nx=16
 Ny=2
 yperiodic=true
 
@@ -24,10 +24,10 @@ Vpd=0
 Upp=3
 Udd=8
 doping=0.125
-ωB1=0
 ωA1=0
-gB1=0
+ωB1=0
 gA1=0
+gB1=0
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
@@ -42,9 +42,9 @@ PY_DIM_2 = 1
 PY_DIM_3 = 1 
 
 # DMRG parameters 
-DMRG_numsweeps = 80 # total number of iterations 
+DMRG_numsweeps = 20 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
-DMRG_maxdim = 2000
+DMRG_maxdim = [200,400,600,800,1000,1200,1400,1600,1800,2000]
 DMRG_cutoff = 1E-10
 DMRG_LBO = false
 max_lbo_dim = 12 
@@ -66,7 +66,7 @@ dmrg_run(Nx, Ny, yperiodic,
         PY_DIM_2, 
         PY_DIM_3,
         DMRG_numsweeps, DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
-        disk_save=true,
+        disk_save=false,
         dir_path=@__DIR__)
 
 println("Computing correlations...")
