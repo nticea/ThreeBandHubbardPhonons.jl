@@ -817,7 +817,7 @@ function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters;
 
     if disk_save && length(maxdim)>1
         println("Maxdim must be fixed if disk_save=true")
-        maxdim = maxdim[-1]
+        maxdim = maxdim[end]
     end
     
     # Load in the last wavefunction 
@@ -835,7 +835,7 @@ function run_DMRG(HM::ThreeBandModel, p::Parameters;
 
     if disk_save && length(maxdim)>1
         println("Maxdim must be fixed if disk_save=true")
-        maxdim = maxdim[-1]
+        maxdim = maxdim[end]
     end
 
     # Initialize the wavefunction 
