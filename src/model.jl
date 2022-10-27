@@ -751,6 +751,10 @@ end
 
 function _run_DMRG(HM::ThreeBandModel, p::Parameters, ϕ0::MPS, sweeps, nsweep, noise, maxdim, cutoff,
                     alg, disk_save)
+
+    if disk_save
+        @assert length(maxdim)==1 "Maxdim must be a scalar"
+    end
     
     if p.DMRG_LBO # If performing local basis optimization
         @assert 1==0 "Not yet implemented"
