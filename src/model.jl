@@ -814,6 +814,11 @@ function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters;
                     alg="divide_and_conquer", disk_save=false)
     # Set DMRG params
     sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(dmrg_results, DMRG_numsweeps_per_save) 
+
+    if disk_save && length(maxdim)>1
+        println("Maxdim must be fixed if disk_save=true")
+        maxdim = maxdim[-1]
+    end
     
     # Load in the last wavefunction 
     ϕ0 = dmrg_results.ground_state
@@ -827,6 +832,11 @@ function run_DMRG(HM::ThreeBandModel, p::Parameters;
     
     # Set DMRG params
     sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(p, DMRG_numsweeps_per_save)
+
+    if disk_save && length(maxdim)>1
+        println("Maxdim must be fixed if disk_save=true")
+        maxdim = maxdim[-1]
+    end
 
     # Initialize the wavefunction 
     ϕ0 = initialize_wavefcn(HM,p)
