@@ -762,7 +762,7 @@ function _run_DMRG(HM::ThreeBandModel, p::Parameters, ϕ0::MPS, sweeps, nsweep, 
                                     max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
     else
         if disk_save
-            energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg, write_when_maxdim_exceeds=p.DMRG_maxdim)
+            energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg, write_when_maxdim_exceeds=maxdim)
         else
             energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
         end
