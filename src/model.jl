@@ -752,8 +752,9 @@ end
 function _run_DMRG(HM::ThreeBandModel, p::Parameters, ϕ0::MPS, sweeps, nsweep, noise, maxdim, cutoff,
                     alg, disk_save)
 
-    if disk_save
-        @assert length(maxdim)==1 "Maxdim must be a scalar"
+    write_maxdim = maxdim
+    if length(maxdim)>1
+        write_maxdim = maxdim[end]
     end
     
     if p.DMRG_LBO # If performing local basis optimization
@@ -762,7 +763,7 @@ function _run_DMRG(HM::ThreeBandModel, p::Parameters, ϕ0::MPS, sweeps, nsweep, 
                                     max_LBO_dim=p.max_LBO_dim, min_LBO_dim=p.min_LBO_dim)
     else
         if disk_save
-            energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg, write_when_maxdim_exceeds=maxdim)
+            energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg, write_when_maxdim_exceeds=write_maxdim)
         else
             energy, ϕ = dmrg(HM.mpo, ϕ0, sweeps, alg=alg)
         end
@@ -818,11 +819,6 @@ function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters;
                     alg="divide_and_conquer", disk_save=false)
     # Set DMRG params
     sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(dmrg_results, DMRG_numsweeps_per_save) 
-
-    if disk_save && length(maxdim)>1
-        println("Maxdim must be fixed if disk_save=true")
-        maxdim = maxdim[end]
-    end
     
     # Load in the last wavefunction 
     ϕ0 = dmrg_results.ground_state
@@ -836,11 +832,6 @@ function run_DMRG(HM::ThreeBandModel, p::Parameters;
     
     # Set DMRG params
     sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(p, DMRG_numsweeps_per_save)
-
-    if disk_save && length(maxdim)>1
-        println("Maxdim must be fixed if disk_save=true")
-        maxdim = maxdim[end]
-    end
 
     # Initialize the wavefunction 
     ϕ0 = initialize_wavefcn(HM,p)
