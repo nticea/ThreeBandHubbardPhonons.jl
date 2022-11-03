@@ -45,7 +45,7 @@ PY_DIM_3 = 1
 DMRG_numsweeps = 20 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
 DMRG_maxdim = 2000#[200,400,600,800,1000,1200,1400,1600,1800,2000]
-DMRG_cutoff = 1E-10
+DMRG_cutoff = 1E-8
 DMRG_LBO = false
 max_lbo_dim = 12 
 
