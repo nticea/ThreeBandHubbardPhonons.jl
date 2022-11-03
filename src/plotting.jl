@@ -8,15 +8,24 @@ include(joinpath(@__DIR__,"model.jl"))
 
 ## EQUILIBRIUM CORRELATIONS ##
 
+function plot_densities(dmrg_results::Union{DMRGResults,DMRGResultsMinimal})
+    p1 = plot_charge_density(dmrg_results)
+    p2 = plot_spin_density(dmrg_results)
+    p3 = plot_phonon_density(dmrg_results)
+    plot(p1, p2, p3, 
+            layout=Plots.grid(1,3, widths=(1/3,1/3,1/3)), size=(2000,500))
+end
+
 function plot_charge_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal})
     n = dmrg_results.charge_density'
     n = n[1:end-2,:] # remove the last rung
-    plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
+    p = plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
     plot!(1:length(n[2:3:end,1]), n[2:3:end,:], label="d")
     plot!(1:length(n[3:3:end,1]), n[3:3:end,:], label="px")
     ylabel!("⟨n⟩")
     xlabel!("Site")
     title!("Electron density")
+    return p 
 end
 
 function plot_phonon_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}, mode::Int; ylims=nothing)
@@ -24,9 +33,30 @@ function plot_phonon_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}
     _plot_phonon_density(n', ylims=ylims)
 end
 
+function plot_phonon_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}; ylims=nothing)
+    
+    function has_nonzero_elements(a)
+        nonzero_inds = findall(x -> x>0, a)
+        return length(nonzero_inds) > 0
+    end
+
+    n = dmrg_results.phonon_density
+    nmodes = size(n)[3]
+    # find the modes with a nonzero number of phonons 
+    toplot = zeros(size(n)[1:2])
+    for m in 1:nmodes
+        mode = n[:,:,m]
+        if has_nonzero_elements(mode)
+            toplot += mode
+        end
+    end
+
+    _plot_phonon_density(toplot', ylims=ylims)
+end
+
 function _plot_phonon_density(n::AbstractArray; ylims=nothing)
     n = n[1:end-2,:] # remove the last rung
-    plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
+    p = plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
     plot!(1:length(n[2:3:end,1]), n[2:3:end,:], label="d")
     plot!(1:length(n[3:3:end,1]), n[3:3:end,:], label="px")
     if !isnothing(ylims)
@@ -35,12 +65,13 @@ function _plot_phonon_density(n::AbstractArray; ylims=nothing)
     ylabel!("⟨nb⟩")
     xlabel!("Site")
     title!("Phonon density")
+    return p 
 end
 
 function plot_spin_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}; ylims=nothing)
     n = dmrg_results.spin_density'
     n = n[1:end-2,:] # remove the last rung
-    plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
+    p = plot(1:length(n[1:3:end,1]), n[1:3:end,:], label="py")
     plot!(1:length(n[2:3:end,1]), n[2:3:end,:], label="d")
     plot!(1:length(n[3:3:end,1]), n[3:3:end,:], label="px")
     if !isnothing(ylims)
@@ -49,6 +80,7 @@ function plot_spin_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}; 
     ylabel!("⟨Sz⟩")
     xlabel!("Site")
     title!("Spin density")
+    return p 
 end
 
 function square_residual(y, ỹ)
@@ -127,9 +159,13 @@ function _plot_equilibrium_correlations_fitted(corrs, corrtype; fit_type=nothing
     end
 
     plot(log10.(xrange), log10.(abs.(corrs)))
-    title!(corrtype*"-"*corrtype*" correlation")
-    xlabel!("Distance from centre site (log10)")
-    ylabel!("Correlation (log10)")
+    title!(corrtype*"-"*corrtype*" correlation", fontsize=8)
+    if corrtype == "dSC_dydy"
+        xlabel!("Distance from centre site (log10)")
+    end
+    if corrtype == "spin"
+        ylabel!("Correlation (log10)")
+    end
     plot!(log10.(xrange), log10.(fit), label="$type, k=$b")
 end
 
@@ -137,10 +173,41 @@ function _plot_equilibrium_correlations(corrs, corrtype)
     corrs = corrs[1:end] # discard the correlation at zero distance (for now...)
     xrange = collect(1:length(corrs))
 
-    plot(log10.(xrange), log10.(abs.(corrs)))
+    p = plot(log10.(xrange), log10.(abs.(corrs)), fontsize=8)
     title!(corrtype*"-"*corrtype*" correlation")
-    xlabel!("Distance from centre site (log10)")
-    ylabel!("Correlation (log10)")
+    if corrtype == "dSC_dydy"
+        xlabel!("Distance from centre site (log10)")
+    end
+    if corrtype == "spin"
+        ylabel!("Correlation (log10)")
+    end
+
+    return p 
+end
+
+function plot_equilibrium_correlations(eq_corrs::EquilibriumCorrelations; 
+                                    do_fit=true, fit_type=nothing)
+    if do_fit
+        p1 = _plot_equilibrium_correlations_fitted(eq_corrs.spin, "spin", fit_type=fit_type)
+        p2 = _plot_equilibrium_correlations_fitted(eq_corrs.charge, "charge", fit_type=fit_type)
+        p3 = _plot_equilibrium_correlations_fitted(eq_corrs.dSC_dxdx, "dSC_dxdx", fit_type=fit_type)
+        p4 = _plot_equilibrium_correlations_fitted(eq_corrs.dSC_dpx, "dSC_dpx", fit_type=fit_type)
+        p5 = _plot_equilibrium_correlations_fitted(eq_corrs.dSC_dydy, "dSC_dydy", fit_type=fit_type)
+        p6 = _plot_equilibrium_correlations_fitted(eq_corrs.dSC_pyd, "dSC_pyd", fit_type=fit_type)
+        p7 = _plot_equilibrium_correlations_fitted(eq_corrs.dSC_pypx, "dSC_pypx", fit_type=fit_type)
+        p8 = _plot_equilibrium_correlations_fitted(eq_corrs.dSC_py1px2, "dSC_py1px2", fit_type=fit_type)
+    else
+        p1 = _plot_equilibrium_correlations(eq_corrs.spin, "spin")
+        p2 = _plot_equilibrium_correlations(eq_corrs.charge, "charge")
+        p3 = _plot_equilibrium_correlations(eq_corrs.dSC_dxdx, "dSC_dxdx")
+        p4 = _plot_equilibrium_correlations(eq_corrs.dSC_dpx, "dSC_dpx")
+        p5 = _plot_equilibrium_correlations(eq_corrs.dSC_dydy, "dSC_dydy")
+        p6 = _plot_equilibrium_correlations(eq_corrs.dSC_pyd, "dSC_pyd")
+        p7 = _plot_equilibrium_correlations(eq_corrs.dSC_pypx, "dSC_pypx")
+        p8 = _plot_equilibrium_correlations(eq_corrs.dSC_py1px2, "dSC_py1px2")
+    end
+    plot(p1, p2, p3, p4, p5, p6, p7, p8, 
+            layout=Plots.grid(2,4, widths=(1/4,1/4,1/4,1/4,1/4,1/4,1/4,1/4)), size=(2000,800))
 end
 
 function plot_equilibrium_correlations(eq_corrs::EquilibriumCorrelations, 

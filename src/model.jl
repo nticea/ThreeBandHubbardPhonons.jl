@@ -171,7 +171,7 @@ function parameters(;Nx::Int, Ny::Int,
     end
 
     if isnothing(DMRG_noise)
-        DMRG_noise = [1E-6,1E-6,1E-8,0]
+        DMRG_noise = [1E-6,1E-7,1E-8,1E-9,0]
     end
     if isnothing(DMRG_maxdim)
         DMRG_maxdim = [20,40,100,200,400]

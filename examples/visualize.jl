@@ -8,20 +8,21 @@ using ITensors
 using ITensors.HDF5
 
 # Load the results in 
-#loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/cuprates/48Nx_2Ny_3εp_1tpd_0.5tpp_0Vpd_3Upp_8Udd_0.125doping_0.1ωB1_0.05ωA1_0gB1_0.005gA1_copy_results.h5"
-loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/cuprates/48Nx_2Ny_3εp_1tpd_0.5tpp_0Vpd_3Upp_8Udd_0.125doping_0.1ωB1_0.05ωA1_0.01gB1_0.005gA1_copy_results.h5"
-
-println("Loading data...")
+loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/cuprates/16Nx_2Ny_3εp_1tpd_0.5tpp_0Vpd_3Upp_8Udd_0.125doping_0.01ωB1_0ωA1_0.005gB1_0gA1_results.h5"
 dmrg_results = load_dmrg_results_minimal(loadpath)
+# Flags 
+do_fit = true
+do_save = false 
+
+## PLOTTING ## 
 
 plot_charge_density(dmrg_results)
 plot_spin_density(dmrg_results)
-plot_phonon_density(dmrg_results, 1) # plot mode 1 
-# plot_phonon_density(dmrg_results, 2) # plot mode 2 
+plot_phonon_density(dmrg_results) # plot sum of all nonzero modes 
 # plot_phonon_density(dmrg_results, 3) # plot mode 3 
+plot_densities(dmrg_results)
 
-# do_fit = true
-# eq_corr = load_equilibrium_correlations(loadpath)
+eq_corr = load_equilibrium_correlations(loadpath)
 # plot_equilibrium_correlations(eq_corr, "spin", do_fit=do_fit)
 # plot_equilibrium_correlations(eq_corr, "charge", do_fit=do_fit)
 # plot_equilibrium_correlations(eq_corr, "dSC_dxdx", do_fit=do_fit)
@@ -30,7 +31,13 @@ plot_phonon_density(dmrg_results, 1) # plot mode 1
 # plot_equilibrium_correlations(eq_corr, "dSC_pyd", do_fit=do_fit)
 # plot_equilibrium_correlations(eq_corr, "dSC_pypx", do_fit=do_fit)
 # plot_equilibrium_correlations(eq_corr, "dSC_py1px2", do_fit=do_fit)
+ploteq = plot_equilibrium_correlations(eq_corr, do_fit=do_fit)
+plotd = plot_densities(dmrg_results)
 
+if do_save 
+    savefig(ploteq, "equilibrium_correlations.pdf")
+    savefig(plotd, "densities.pdf")
+end
 
 
 

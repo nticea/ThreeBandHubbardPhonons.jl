@@ -10,7 +10,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=4
+Nx=16
 Ny=2
 yperiodic=true
 
@@ -42,10 +42,10 @@ PY_DIM_2 = 1
 PY_DIM_3 = 1 
 
 # DMRG parameters 
-DMRG_numsweeps = 15 # total number of iterations 
+DMRG_numsweeps = 20 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
-DMRG_maxdim = 64
-DMRG_cutoff = 1E-10
+DMRG_maxdim = [100,200,400,600,800,1000]
+DMRG_cutoff = 1E-8
 
 # Initialize 
 println("Initializing...")
@@ -65,7 +65,7 @@ TBHModel = ThreeBandModel(params);
 # Run DMRG
 println("Finding ground state...")
 dmrg_results = run_DMRG(TBHModel, params, DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, 
-                        alg="divide_and_conquer", disk_save=true);
+                        alg="divide_and_conquer", disk_save=false);
 
 # Equilibrium correlations
 println("Computing equilibrium correlations...")

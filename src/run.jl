@@ -42,11 +42,28 @@ function dmrg_run(Nx, Ny, yperiodic,
     # open(output_path, "a") do io
     #     redirect_stdout(io) do 
 
-    try
-        global params = load_params(save_path)
-        println("Loading parameters from ", save_path)
-    catch 
-        global params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, 
+    # try
+    #     global params = load_params(save_path)
+    #     println("Loading parameters from ", save_path)
+    # catch 
+    #     global params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, 
+    #                     tpp=tpp, Vpd=Vpd, Upp=Upp, Udd=Udd, 
+    #                     ωB1=ωB1, ωA1=ωA1, gB1=gB1, gA1=gA1,doping=doping, 
+    #                     dim_copper_mode_1=dim_copper_mode_1, dim_copper_mode_2=dim_copper_mode_2, 
+    #                     dim_copper_mode_3=dim_copper_mode_3,
+    #                     dim_oxygen_x_mode_1=dim_oxygen_x_mode_1, dim_oxygen_x_mode_2=dim_oxygen_x_mode_2, 
+    #                     dim_oxygen_x_mode_3=dim_oxygen_x_mode_3,
+    #                     dim_oxygen_y_mode_1=dim_oxygen_y_mode_1, dim_oxygen_y_mode_2=dim_oxygen_y_mode_2, 
+    #                     dim_oxygen_y_mode_3=dim_oxygen_y_mode_3,
+    #                     DMRG_numsweeps=DMRG_numsweeps,
+    #                     DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO)
+    #     println("Initializing parameters...")
+    #     save_structs(params, save_path)
+    #     println("Saving parameters to ", save_path)
+    # end
+
+    # Re-initializing the parameters every time in case we've updated the DMRG parameters
+    global params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, 
                         tpp=tpp, Vpd=Vpd, Upp=Upp, Udd=Udd, 
                         ωB1=ωB1, ωA1=ωA1, gB1=gB1, gA1=gA1,doping=doping, 
                         dim_copper_mode_1=dim_copper_mode_1, dim_copper_mode_2=dim_copper_mode_2, 
@@ -57,10 +74,8 @@ function dmrg_run(Nx, Ny, yperiodic,
                         dim_oxygen_y_mode_3=dim_oxygen_y_mode_3,
                         DMRG_numsweeps=DMRG_numsweeps,
                         DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO)
-        println("Initializing parameters...")
-        save_structs(params, save_path)
-        println("Saving parameters to ", save_path)
-    end
+    println("Initializing parameters...")
+    save_structs(params, save_path)
 
     # Initialize the model (sites and MPO)
     global TBHModel = ThreeBandModel(params)
