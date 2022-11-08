@@ -8,11 +8,11 @@ using ITensors
 using ITensors.HDF5
 
 # Load the results in 
-loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/cuprates/16Nx_2Ny_3εp_1tpd_0.5tpp_0Vpd_3Upp_8Udd_0.125doping_0.01ωB1_0ωA1_0.005gB1_0gA1_results.h5"
+loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/cuprates/16Nx_2Ny_3εp_1tpd_0.5tpp_0Vpd_3Upp_8Udd_0.125doping_0ωB1_0.1ωA1_0gB1_0.05gA1_results.h5"
 dmrg_results = load_dmrg_results_minimal(loadpath)
 # Flags 
 do_fit = true
-do_save = false 
+do_save = true 
 
 ## PLOTTING ## 
 
