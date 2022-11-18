@@ -11,7 +11,8 @@ function dmrg_run(Nx, Ny, yperiodic,
                 dim_oxygen_y_mode_1, 
                 dim_oxygen_y_mode_2, 
                 dim_oxygen_y_mode_3,
-                DMRG_numsweeps, DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
+                DMRG_numsweeps, DMRG_noise,
+                DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
                 disk_save=false,
                 dir_path=@__DIR__)
 
@@ -72,7 +73,7 @@ function dmrg_run(Nx, Ny, yperiodic,
                         dim_oxygen_x_mode_3=dim_oxygen_x_mode_3,
                         dim_oxygen_y_mode_1=dim_oxygen_y_mode_1, dim_oxygen_y_mode_2=dim_oxygen_y_mode_2, 
                         dim_oxygen_y_mode_3=dim_oxygen_y_mode_3,
-                        DMRG_numsweeps=DMRG_numsweeps,
+                        DMRG_numsweeps=DMRG_numsweeps, DMRG_noise=DMRG_noise,
                         DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff, DMRG_LBO=DMRG_LBO)
     println("Initializing parameters...")
     save_structs(params, save_path)

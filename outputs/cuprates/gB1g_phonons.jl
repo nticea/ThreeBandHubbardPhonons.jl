@@ -42,10 +42,26 @@ PY_DIM_2 = 1
 PY_DIM_3 = 1 
 
 # DMRG parameters 
-DMRG_numsweeps = 20 # total number of iterations 
+DMRG_numsweeps = 40 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
-DMRG_maxdim = 2000#[200,400,600,800,1000,1200,1400,1600,1800,2000]
+DMRG_maxdim = [50,50,50,50,50,
+               100,100,100,100,100,
+               200,200,200,200,200,
+               300,300,300,300,300,
+               500,500,500,500,500,
+               700,700,700,700,700,
+               900,900,900,900,900,
+               1000]
+DMRG_noise = [1E-6, 1E-7, 1E-8, 1E-9, 0,
+                1E-6, 1E-7, 1E-8, 1E-9, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0]
 DMRG_cutoff = 1E-12
+
 DMRG_LBO = false
 max_lbo_dim = 12 
 
@@ -65,8 +81,10 @@ dmrg_run(Nx, Ny, yperiodic,
         PY_DIM_1, 
         PY_DIM_2, 
         PY_DIM_3,
-        DMRG_numsweeps, DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
-        disk_save=true,
+        DMRG_numsweeps, DMRG_noise, 
+        DMRG_maxdim, DMRG_cutoff, 
+        DMRG_numsweeps_per_save;
+        disk_save=false,
         dir_path=@__DIR__)
 
 println("Computing correlations...")

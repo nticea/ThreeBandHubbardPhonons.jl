@@ -44,8 +44,8 @@ PY_DIM_3 = 1
 # DMRG parameters 
 DMRG_numsweeps = 20 # total number of iterations 
 DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
-DMRG_maxdim = [100,200,400,600,800,1000]
-DMRG_cutoff = 1E-8
+DMRG_maxdim = [100,100,100,100,100,200,200,200,200,200,256,256,256,256,256,512]
+DMRG_cutoff = 1E-10
 
 # Initialize 
 println("Initializing...")
