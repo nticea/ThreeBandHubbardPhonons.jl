@@ -13,6 +13,7 @@ function dmrg_run(Nx, Ny, yperiodic,
                 dim_oxygen_y_mode_3,
                 DMRG_numsweeps, DMRG_noise,
                 DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
+                overwrite_sweeps=false,
                 disk_save=false,
                 dir_path=@__DIR__)
 
@@ -90,6 +91,10 @@ function dmrg_run(Nx, Ny, yperiodic,
         println("Running DMRG...")
         global dmrg_results = run_DMRG(TBHModel, params, 
                                     DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer", disk_save=disk_save)
+        # benchmarking 
+        ψ_gs = dmrg_results.ground_state 
+        @show linkdims(ψ_gs)
+        
         dmrg_results_minimal = DMRGResultsMinimal(dmrg_results.ground_state_energy,
                                     dmrg_results.ground_state_entropy, 
                                     dmrg_results.charge_density,
@@ -103,7 +108,12 @@ function dmrg_run(Nx, Ny, yperiodic,
     # Do the rest of the DMRG runs 
     for _ in 1:floor(Int, DMRG_numsweeps/DMRG_numsweeps_per_save)
         global dmrg_results = run_DMRG(dmrg_results, TBHModel, params, 
-                                    DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer", disk_save=disk_save)
+                                    DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer", 
+                                    overwrite_sweeps=overwrite_sweeps, disk_save=disk_save)
+        # benchmarking 
+        ψ_gs = dmrg_results.ground_state 
+        @show linkdims(ψ_gs)
+
         dmrg_results_minimal = DMRGResultsMinimal(dmrg_results.ground_state_energy,
                                     dmrg_results.ground_state_entropy, 
                                     dmrg_results.charge_density,

@@ -42,10 +42,25 @@ PY_DIM_2 = 1
 PY_DIM_3 = 1 
 
 # DMRG parameters 
-DMRG_numsweeps = 20 # total number of iterations 
-DMRG_numsweeps_per_save = DMRG_numsweeps # Not saving, so it doesn't matter 
-DMRG_maxdim = [100,100,100,100,100,200,200,200,200,200,256,256,256,256,256,512]
-DMRG_cutoff = 1E-10
+DMRG_numsweeps = 30 # total number of iterations 
+DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to DMRG_numsweeps
+DMRG_maxdim = [50,50,50,50,50,
+               100,100,100,100,100,
+               200,200,200,200,200,
+               300,300,300,300,300,
+               500,500,500,500,500,
+               700,700,700,700,700,
+               900,900,900,900,900,
+               1000]
+DMRG_noise = [1E-6, 1E-7, 1E-8, 1E-9, 0,
+                1E-6, 1E-7, 1E-8, 1E-9, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0]
+DMRG_cutoff = 1E-12
 
 # Initialize 
 println("Initializing...")
@@ -57,15 +72,24 @@ params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, 
                     dim_oxygen_x_mode_1=PX_DIM_1, dim_oxygen_x_mode_2=PX_DIM_2, 
                     dim_oxygen_x_mode_3=PX_DIM_3, dim_oxygen_y_mode_1=PY_DIM_1, 
                     dim_oxygen_y_mode_2=PY_DIM_2, dim_oxygen_y_mode_3=PY_DIM_3,
-                    DMRG_numsweeps=DMRG_numsweeps,
+                    DMRG_numsweeps=DMRG_numsweeps, DMRG_noise=DMRG_noise,
                     DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff);
 # The Hamiltonian MPO 
 TBHModel = ThreeBandModel(params);
 
-# Run DMRG
+# Run DMRG first few sweeps 
 println("Finding ground state...")
-dmrg_results = run_DMRG(TBHModel, params, DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, 
-                        alg="divide_and_conquer", disk_save=false);
+global dmrg_results = run_DMRG(TBHModel, params, DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, 
+                            alg="divide_and_conquer", disk_save=false);
+
+for i in 1:floor(Int, DMRG_numsweeps/DMRG_numsweeps_per_save)
+    global dmrg_results = run_DMRG(dmrg_results, TBHModel, params, 
+                                    DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, 
+                                    alg="divide_and_conquer", disk_save=false)
+    ψ_gs = dmrg_results.ground_state
+    @show linkdims(ψ_gs)
+end
+plot_densities(dmrg_results)
 
 # Equilibrium correlations
 println("Computing equilibrium correlations...")

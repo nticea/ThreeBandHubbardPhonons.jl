@@ -417,3 +417,4 @@ function ITensors.op(::OpName"Ntot(Bd+B)", ::SiteType"HubHolst", s::Index)
   M = kron(Ntot, (Bdag + B))
   ITensor(M, prime(s), dag(s))
 end
+

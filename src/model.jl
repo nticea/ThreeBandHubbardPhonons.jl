@@ -703,6 +703,7 @@ function get_sweeps(p::Parameters, DMRG_numsweeps_per_save::Int)
     sweeps = Sweeps(p.DMRG_numsweeps)
     setnoise!(sweeps, p.DMRG_noise...) # Very important to use noise for this model
     setmaxdim!(sweeps, p.DMRG_maxdim...)
+    setmindim!(sweeps, p.DMRG_maxdim...)
     setcutoff!(sweeps, p.DMRG_cutoff...)
     nsweep = p.DMRG_numsweeps
     noise = sweeps.noise
@@ -713,6 +714,7 @@ function get_sweeps(p::Parameters, DMRG_numsweeps_per_save::Int)
         sweeps = Sweeps(DMRG_numsweeps_per_save)
         setnoise!(sweeps, noise[1:DMRG_numsweeps_per_save]...)
         setmaxdim!(sweeps, maxdim[1:DMRG_numsweeps_per_save]...)
+        setmindim!(sweeps, maxdim[1:DMRG_numsweeps_per_save]...)
         setcutoff!(sweeps, cutoff[1:DMRG_numsweeps_per_save]...)
         nsweep = DMRG_numsweeps_per_save
         noise = noise[DMRG_numsweeps_per_save:end]
@@ -726,11 +728,17 @@ end
 function get_sweeps(d::DMRGResults, DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing)
     nsweep, noise, maxdim, cutoff = d.nsweep, d.noise, d.maxdim, d.cutoff
 
+    @show nsweep
+    @show noise
+    @show maxdim
+    @show cutoff
+
     if length(noise) > DMRG_numsweeps_per_save 
         if !isnothing(DMRG_numsweeps_per_save)
             sweeps = Sweeps(DMRG_numsweeps_per_save)
             setnoise!(sweeps, noise[1:DMRG_numsweeps_per_save]...)
             setmaxdim!(sweeps, maxdim[1:DMRG_numsweeps_per_save]...)
+            setmindim!(sweeps, maxdim[1:DMRG_numsweeps_per_save]...)
             setcutoff!(sweeps, cutoff[1:DMRG_numsweeps_per_save]...)
             nsweep = DMRG_numsweeps_per_save
             noise = noise[DMRG_numsweeps_per_save:end]
@@ -742,6 +750,7 @@ function get_sweeps(d::DMRGResults, DMRG_numsweeps_per_save::Union{Nothing,Int}=
         sweeps = Sweeps(DMRG_numsweeps_per_save)
         setnoise!(sweeps, noise...)
         setmaxdim!(sweeps, maxdim...)
+        setmindim!(sweeps, maxdim...)
         setcutoff!(sweeps, cutoff...)
         nsweep += DMRG_numsweeps_per_save
     end
@@ -816,9 +825,14 @@ end
 
 function run_DMRG(dmrg_results::DMRGResults, HM::ThreeBandModel, p::Parameters; 
                     DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing, 
-                    alg="divide_and_conquer", disk_save=false)
+                    alg="divide_and_conquer", disk_save=false, overwrite_sweeps=false)
     # Set DMRG params
-    sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(dmrg_results, DMRG_numsweeps_per_save) 
+    if overwrite_sweeps
+        sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(p, DMRG_numsweeps_per_save)
+    else
+        #start where we left off 
+        sweeps, nsweep, noise, maxdim, cutoff = get_sweeps(dmrg_results, DMRG_numsweeps_per_save)
+    end
     
     # Load in the last wavefunction 
     ϕ0 = dmrg_results.ground_state
