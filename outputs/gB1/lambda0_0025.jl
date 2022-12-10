@@ -1,16 +1,17 @@
 ## IMPORTS ##
 using Pkg
-Pkg.activate(joinpath(@__DIR__,".."))
-using Dates
-include(joinpath(@__DIR__,"../src/model.jl"))
-include(joinpath(@__DIR__,"../src/utilities.jl"))
+Pkg.activate(joinpath(@__DIR__,"../../"))
+include(joinpath(@__DIR__,"../../src/model.jl"))
+include(joinpath(@__DIR__,"../../src/utilities.jl"))
+include(joinpath(@__DIR__,"../../src/run.jl"))
 
+# The equilibrium corrs require contracting tensors w many indices
 ITensors.set_warn_order(50)
 
 ## PARAMETERS ## 
 
 # Model 
-Nx=8
+Nx=16
 Ny=2
 yperiodic=true
 
@@ -24,9 +25,9 @@ Upp=3
 Udd=8
 doping=0.125
 ωA1=0
-ωB1=0.1
+ωB1=1
 gA1=0
-gB1=0.01
+gB1=0.1
 
 λ=gB1^2/(4*ωB1)
 @show λ
@@ -78,36 +79,36 @@ DMRG_noise = [1E-6, 1E-7, 1E-8, 1E-9, 0,
                 1E-7, 1E-8, 1E-9, 1E-10, 0,
                 0,0,0,0,0]
 DMRG_cutoff = 1E-12
+overwrite_sweeps = false
 
-# Initialize 
-println("Initializing...")
-params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, 
-                    tpp=tpp, Vpd=Vpd, Upp=Upp, Udd=Udd, 
-                    ωB1=ωB1, ωA1=ωA1, gB1=gB1, gA1=gA1,doping=doping, 
-                    dim_copper_mode_1=COPPER_DIM_1, dim_copper_mode_2=COPPER_DIM_2, 
-                    dim_copper_mode_3=COPPER_DIM_3,
-                    dim_oxygen_x_mode_1=PX_DIM_1, dim_oxygen_x_mode_2=PX_DIM_2, 
-                    dim_oxygen_x_mode_3=PX_DIM_3, dim_oxygen_y_mode_1=PY_DIM_1, 
-                    dim_oxygen_y_mode_2=PY_DIM_2, dim_oxygen_y_mode_3=PY_DIM_3,
-                    DMRG_numsweeps=DMRG_numsweeps, DMRG_noise=DMRG_noise,
-                    DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff);
-# The Hamiltonian MPO 
-TBHModel = ThreeBandModel(params);
+# DMRG_numsweeps = 20 # total number of iterations 
+# DMRG_numsweeps_per_save = 3
+# DMRG_maxdim = [2500]
+# DMRG_noise = [1E-6, 1E-7, 1E-8, 1E-9, 0]
+# DMRG_cutoff = 1E-12
 
-# Run DMRG first few sweeps 
-println("Finding ground state...")
-global dmrg_results = run_DMRG(TBHModel, params, DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, 
-                            alg="divide_and_conquer", disk_save=false);
+## SAVE OUT INFO ##
+println("Running DMRG...")
+dmrg_run(Nx, Ny, yperiodic, 
+        μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
+        ωB1, ωA1, gB1, gA1, 
+        doping, 
+        COPPER_DIM_1, 
+        COPPER_DIM_2, 
+        COPPER_DIM_3,
+        PX_DIM_1, 
+        PX_DIM_2, 
+        PX_DIM_3,
+        PY_DIM_1, 
+        PY_DIM_2, 
+        PY_DIM_3,
+        DMRG_numsweeps, DMRG_noise, 
+        DMRG_maxdim, DMRG_cutoff, 
+        DMRG_numsweeps_per_save;
+        overwrite_sweeps=overwrite_sweeps,
+        disk_save=false,
+        dir_path=@__DIR__)
 
-for i in 1:floor(Int, DMRG_numsweeps/DMRG_numsweeps_per_save)
-    global dmrg_results = run_DMRG(dmrg_results, TBHModel, params, 
-                                    DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, 
-                                    alg="divide_and_conquer", disk_save=false)
-    ψ_gs = dmrg_results.ground_state
-    @show linkdims(ψ_gs)
-end
-plot_densities(dmrg_results)
-
-# Equilibrium correlations
-println("Computing equilibrium correlations...")
-eq_corr = compute_all_equilibrium_correlations(dmrg_results, TBHModel, params)
+println("Computing correlations...")
+correlations_run(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
+                ωB1, ωA1, gB1, gA1, doping; dir_path=@__DIR__)
