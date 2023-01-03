@@ -79,6 +79,9 @@ function dmrg_run(Nx, Ny, yperiodic,
     println("Initializing parameters...")
     save_structs(params, save_path)
 
+    λ = calculate_λ(params)
+    @show λ
+
     # Initialize the model (sites and MPO)
     global TBHModel = ThreeBandModel(params)
 

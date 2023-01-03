@@ -29,9 +29,6 @@ doping=0.125
 gA1=0
 gB1=0.01
 
-λ=gB1^2/(4*ωB1)
-@show λ
-
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
 COPPER_DIM_1 = 1 

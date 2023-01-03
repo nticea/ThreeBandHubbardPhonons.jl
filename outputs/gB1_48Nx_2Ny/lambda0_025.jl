@@ -11,7 +11,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=16
+Nx=48
 Ny=2
 yperiodic=true
 
@@ -25,9 +25,9 @@ Upp=3
 Udd=8
 doping=0.125
 ωA1=0
-ωB1=0
+ωB1=0.1
 gA1=0
-gB1=0
+gB1=0.1
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
@@ -37,7 +37,7 @@ COPPER_DIM_3 = 1
 PX_DIM_1 = 1 
 PX_DIM_2 = 1 
 PX_DIM_3 = 1 
-PY_DIM_1 = 1
+PY_DIM_1 = 3 
 PY_DIM_2 = 1 
 PY_DIM_3 = 1 
 
@@ -55,7 +55,10 @@ DMRG_maxdim = [50,50,50,50,50,
                1500,1500,1500,1500,1500,
                1500,1500,1500,1500,1500,
                2000,2000,2000,2000,2000,
-               2000,2000,2000,2000,2000]
+               2000,2000,2000,2000,2000,
+               2500,2500,2500,2500,2500,
+               2500,2500,2500,2500,2500,
+               3000,3000,3000,3000,3000]
 DMRG_noise = [1E-6, 1E-7, 1E-8, 1E-9, 0,
                 1E-6, 1E-7, 1E-8, 1E-9, 0,
                 1E-7, 1E-8, 1E-9, 1E-10, 0,
@@ -64,6 +67,10 @@ DMRG_noise = [1E-6, 1E-7, 1E-8, 1E-9, 0,
                 1E-7, 1E-8, 1E-9, 1E-10, 0,
                 1E-7, 1E-8, 1E-9, 1E-10, 0,
                 1E-7, 1E-8, 1E-9, 1E-10, 0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                0,0,0,0,0,
+                1E-7, 1E-8, 1E-9, 1E-10, 0,
+                0,0,0,0,0,
                 1E-7, 1E-8, 1E-9, 1E-10, 0,
                 0,0,0,0,0,
                 1E-7, 1E-8, 1E-9, 1E-10, 0,

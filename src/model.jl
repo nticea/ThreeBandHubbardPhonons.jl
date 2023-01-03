@@ -202,6 +202,10 @@ function are_equal(p1::Parameters, p2::Parameters)
     end
 end
 
+function calculate_λ(p::Parameters)
+    λ = p.gB1^2 / (4 * p.ωB1)
+end
+
 ## LATTICE ##
 
 function visualize_lattice(p::Parameters)
@@ -690,6 +694,13 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
             end
         end
     end
+
+    num_holes_up = length(findall(x-> x==ups, state_arr))
+    num_holes_down = length(findall(x-> x==downs, state_arr))
+
+    @show num_holes_up
+    @show num_holes_down
+    @assert num_holes_up==num_holes_down
 
     num_holes_total = length(state_arr) - length(findall(x-> x==emps, state_arr))
     @show num_holes_total

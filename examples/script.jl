@@ -10,7 +10,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=8
+Nx=48
 Ny=2
 yperiodic=true
 
