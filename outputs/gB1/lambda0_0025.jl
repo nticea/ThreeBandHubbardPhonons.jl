@@ -29,9 +29,6 @@ doping=0.125
 gA1=0
 gB1=0.1
 
-λ=gB1^2/(4*ωB1)
-@show λ
-
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
 COPPER_DIM_1 = 1 
@@ -107,8 +104,10 @@ dmrg_run(Nx, Ny, yperiodic,
         DMRG_numsweeps_per_save;
         overwrite_sweeps=overwrite_sweeps,
         disk_save=false,
-        dir_path=@__DIR__)
+        checkpoint_path=@__DIR__,
+        results_path=@__DIR__)
 
 println("Computing correlations...")
 correlations_run(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
-                ωB1, ωA1, gB1, gA1, doping; dir_path=@__DIR__)
+                ωB1, ωA1, gB1, gA1, doping; checkpoint_path=@__DIR__,
+                results_path=@__DIR__)

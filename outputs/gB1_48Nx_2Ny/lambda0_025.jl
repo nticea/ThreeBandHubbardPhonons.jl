@@ -11,7 +11,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=16
+Nx=48
 Ny=2
 yperiodic=true
 
@@ -104,10 +104,10 @@ dmrg_run(Nx, Ny, yperiodic,
         DMRG_numsweeps_per_save;
         overwrite_sweeps=overwrite_sweeps,
         disk_save=false,
-        checkpoint_path=@__DIR__,
+        checkpoint_path="/scratch/users/nticea",
         results_path=@__DIR__)
 
 println("Computing correlations...")
 correlations_run(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
-                ωB1, ωA1, gB1, gA1, doping; checkpoint_path=@__DIR__,
+                ωB1, ωA1, gB1, gA1, doping; checkpoint_path="/scratch/users/nticea",
                 results_path=@__DIR__)

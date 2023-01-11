@@ -15,11 +15,12 @@ function dmrg_run(Nx, Ny, yperiodic,
                 DMRG_maxdim, DMRG_cutoff, DMRG_numsweeps_per_save;
                 overwrite_sweeps=false,
                 disk_save=false,
-                dir_path=@__DIR__)
+                checkpoint_path=@__DIR__,
+                results_path=@__DIR__)
 
     param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Vpd)Vpd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ωB1)ωB1_$(ωA1)ωA1_$(gB1)gB1_$(gA1)gA1"
-    save_path = joinpath(dir_path,param_stamp*".h5")
-    results_save_path = joinpath(dir_path,param_stamp*"_results.h5")
+    save_path = joinpath(checkpoint_path,param_stamp*".h5")
+    results_save_path = joinpath(results_path,param_stamp*"_results.h5")
 
     # Create the output file 
     # output_path = joinpath(@__DIR__,param_stamp*"_out.log")
@@ -79,6 +80,9 @@ function dmrg_run(Nx, Ny, yperiodic,
     println("Initializing parameters...")
     save_structs(params, save_path)
 
+    λ = calculate_λ(params)
+    @show λ
+
     # Initialize the model (sites and MPO)
     global TBHModel = ThreeBandModel(params)
 
@@ -131,11 +135,12 @@ function correlations_run(Nx, Ny, yperiodic,
                             μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
                             ωB1, ωA1, gB1, gA1, 
                             doping;
-                            dir_path=@__DIR__)
+                            checkpoint_path=@__DIR__,
+                            results_path=@__DIR__)
 
     param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Vpd)Vpd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ωB1)ωB1_$(ωA1)ωA1_$(gB1)gB1_$(gA1)gA1"
-    save_path = joinpath(dir_path,param_stamp*".h5")
-    results_save_path = joinpath(dir_path,param_stamp*"_results.h5")
+    save_path = joinpath(checkpoint_path,param_stamp*".h5")
+    results_save_path = joinpath(results_path,param_stamp*"_results.h5")
 
     # Create the output file 
     # output_path = joinpath(@__DIR__,param_stamp*"_out.log")

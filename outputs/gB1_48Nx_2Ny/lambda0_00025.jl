@@ -11,7 +11,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx=16
+Nx=48
 Ny=2
 yperiodic=true
 
@@ -27,7 +27,7 @@ doping=0.125
 ωA1=0
 ωB1=0.1
 gA1=0
-gB1=0.1
+gB1=0.01
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
@@ -103,11 +103,10 @@ dmrg_run(Nx, Ny, yperiodic,
         DMRG_maxdim, DMRG_cutoff, 
         DMRG_numsweeps_per_save;
         overwrite_sweeps=overwrite_sweeps,
-        disk_save=false,
-        checkpoint_path=@__DIR__,
+        checkpoint_path="/scratch/users/nticea",
         results_path=@__DIR__)
 
 println("Computing correlations...")
 correlations_run(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
-                ωB1, ωA1, gB1, gA1, doping; checkpoint_path=@__DIR__,
+                ωB1, ωA1, gB1, gA1, doping; checkpoint_path="/scratch/users/nticea",
                 results_path=@__DIR__)
