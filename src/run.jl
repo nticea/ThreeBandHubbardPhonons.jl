@@ -95,9 +95,6 @@ function dmrg_run(Nx, Ny, yperiodic,
         println("Running DMRG...")
         global dmrg_results = run_DMRG(TBHModel, params, 
                                     DMRG_numsweeps_per_save=DMRG_numsweeps_per_save, alg="divide_and_conquer", disk_save=disk_save)
-        # benchmarking 
-        ψ_gs = dmrg_results.ground_state 
-        @show linkdims(ψ_gs)
         
         dmrg_results_minimal = DMRGResultsMinimal(dmrg_results.ground_state_energy,
                                     dmrg_results.ground_state_entropy, 

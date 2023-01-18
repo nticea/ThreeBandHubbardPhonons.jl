@@ -8,12 +8,12 @@ include(joinpath(@__DIR__,"model.jl"))
 
 ## EQUILIBRIUM CORRELATIONS ##
 
-function plot_densities(dmrg_results::Union{DMRGResults,DMRGResultsMinimal})
+function plot_densities(dmrg_results::Union{DMRGResults,DMRGResultsMinimal};title::String="")
     p1 = plot_charge_density(dmrg_results)
     p2 = plot_spin_density(dmrg_results)
     p3 = plot_phonon_density(dmrg_results)
     plot(p1, p2, p3, 
-            layout=Plots.grid(1,3, widths=(1/3,1/3,1/3)), size=(2000,500))
+            layout=Plots.grid(1,3, widths=(1/3,1/3,1/3)), size=(2000,500), title=title)
 end
 
 function plot_charge_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal})

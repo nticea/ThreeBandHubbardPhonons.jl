@@ -739,11 +739,6 @@ end
 function get_sweeps(d::DMRGResults, DMRG_numsweeps_per_save::Union{Nothing,Int}=nothing)
     nsweep, noise, maxdim, cutoff = d.nsweep, d.noise, d.maxdim, d.cutoff
 
-    @show nsweep
-    @show noise
-    @show maxdim
-    @show cutoff
-
     if length(noise) > DMRG_numsweeps_per_save 
         if !isnothing(DMRG_numsweeps_per_save)
             sweeps = Sweeps(DMRG_numsweeps_per_save)

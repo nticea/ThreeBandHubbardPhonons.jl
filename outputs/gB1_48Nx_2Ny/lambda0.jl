@@ -56,8 +56,8 @@ DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to 
 #                1500,1500,1500,1500,1500,
 #                2000,2000,2000,2000,2000,
 #                2000,2000,2000,2000,2000]
-DMRG_maxdim = [2000,2000,2000,2000,2000,
-               3000]
+DMRG_maxdim = [3000,3000,3000,3000,3000,
+               4000]
 DMRG_noise = [0,0,0,0,0,
                 1E-7, 1E-8, 1E-9, 1E-10, 0]
 DMRG_cutoff = 1E-12
