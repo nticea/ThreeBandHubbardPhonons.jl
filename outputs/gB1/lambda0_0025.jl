@@ -85,29 +85,29 @@ overwrite_sweeps = false
 # DMRG_cutoff = 1E-12
 
 ## SAVE OUT INFO ##
-println("Running DMRG...")
-dmrg_run(Nx, Ny, yperiodic, 
-        μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
-        ωB1, ωA1, gB1, gA1, 
-        doping, 
-        COPPER_DIM_1, 
-        COPPER_DIM_2, 
-        COPPER_DIM_3,
-        PX_DIM_1, 
-        PX_DIM_2, 
-        PX_DIM_3,
-        PY_DIM_1, 
-        PY_DIM_2, 
-        PY_DIM_3,
-        DMRG_numsweeps, DMRG_noise, 
-        DMRG_maxdim, DMRG_cutoff, 
-        DMRG_numsweeps_per_save;
-        overwrite_sweeps=overwrite_sweeps,
-        disk_save=false,
-        checkpoint_path=@__DIR__,
-        results_path=@__DIR__)
+# println("Running DMRG...")
+# dmrg_run(Nx, Ny, yperiodic, 
+#         μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
+#         ωB1, ωA1, gB1, gA1, 
+#         doping, 
+#         COPPER_DIM_1, 
+#         COPPER_DIM_2, 
+#         COPPER_DIM_3,
+#         PX_DIM_1, 
+#         PX_DIM_2, 
+#         PX_DIM_3,
+#         PY_DIM_1, 
+#         PY_DIM_2, 
+#         PY_DIM_3,
+#         DMRG_numsweeps, DMRG_noise, 
+#         DMRG_maxdim, DMRG_cutoff, 
+#         DMRG_numsweeps_per_save;
+#         overwrite_sweeps=overwrite_sweeps,
+#         disk_save=false,
+#         checkpoint_path="/oak/stanford/groups/tpd/nticea/threeband/gB1/",
+#         results_path=@__DIR__)
 
 println("Computing correlations...")
 correlations_run(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
-                ωB1, ωA1, gB1, gA1, doping; checkpoint_path=@__DIR__,
+                ωB1, ωA1, gB1, gA1, doping; checkpoint_path="/oak/stanford/groups/tpd/nticea/threeband/gB1/",
                 results_path=@__DIR__)

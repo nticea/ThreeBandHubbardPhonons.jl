@@ -104,10 +104,10 @@ dmrg_run(Nx, Ny, yperiodic,
         DMRG_numsweeps_per_save;
         overwrite_sweeps=overwrite_sweeps,
         disk_save=false,
-        checkpoint_path=@__DIR__,
+        checkpoint_path="/oak/stanford/groups/tpd/nticea/threeband/gB1/",
         results_path=@__DIR__)
 
 println("Computing correlations...")
 correlations_run(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd, 
-                ωB1, ωA1, gB1, gA1, doping; checkpoint_path=@__DIR__,
+                ωB1, ωA1, gB1, gA1, doping; checkpoint_path="/oak/stanford/groups/tpd/nticea/threeband/gB1/",
                 results_path=@__DIR__)
