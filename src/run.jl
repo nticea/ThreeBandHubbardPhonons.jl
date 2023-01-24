@@ -179,6 +179,13 @@ function correlations_run(Nx, Ny, yperiodic,
         println("Computing equilibrium correlations")
     end
 
+    start, stop, dSC_dxdx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "dSC")
+    global eq_corr.start = start
+    global eq_corr.stop = stop 
+    global eq_corr.dSC_dxdx = dSC_dxdx 
+    save_structs(eq_corr, results_save_path)
+    println("Saving dSC correlations for py-px bond...")
+
     start, stop, spin_corr = compute_equilibrium_onsite_correlation(dmrg_results,HM,p,"dx-dx","spin")
     global eq_corr.start = start
     global eq_corr.stop = stop 
@@ -215,9 +222,4 @@ function correlations_run(Nx, Ny, yperiodic,
     global eq_corr.dSC_py1px2 = dSC_py1px2 
     save_structs(eq_corr, results_save_path)
     println("Saving dSC correlations for py1-px2 bond...")
-
-    _,_,dSC_dxdx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "dSC")
-    global eq_corr.dSC_dxdx = dSC_dxdx 
-    save_structs(eq_corr, results_save_path)
-    println("Saving dSC correlations for py-px bond...")
 end
