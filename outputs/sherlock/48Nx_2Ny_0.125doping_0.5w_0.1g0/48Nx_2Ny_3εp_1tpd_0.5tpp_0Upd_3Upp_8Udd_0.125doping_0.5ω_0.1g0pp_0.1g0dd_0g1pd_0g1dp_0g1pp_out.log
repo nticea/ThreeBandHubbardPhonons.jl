@@ -1,0 +1,38 @@
+Appending to file...
+e = ErrorException("unable to determine if /scratch/users/nticea/48Nx_2Ny_3εp_1tpd_0.5tpp_0Upd_3Upp_8Udd_0.125doping_0.5ω_0.1g0pp_0.1g0dd_0g1pd_0g1dp_0g1pp.h5 is accessible in the HDF5 format (file may not exist)")
+Initializing parameters...
+Saving parameters to /scratch/users/nticea/48Nx_2Ny_3εp_1tpd_0.5tpp_0Upd_3Upp_8Udd_0.125doping_0.5ω_0.1g0pp_0.1g0dd_0g1pd_0g1dp_0g1pp.h5
+Loading DMRG results
+e = HDF5.API.H5Error("Error opening group //ground_state", 1008806316530991104)
+Running DMRG...
+Nh_doped = 12
+After sweep 1 energy=-110.38642535357171  maxlinkdim=562 maxerr=1.00E-10 time=224.961
+Interim DMRG save
+After sweep 1 energy=-127.95626497568226  maxlinkdim=1260 maxerr=1.00E-10 time=3713.426
+Interim DMRG save
+After sweep 1 energy=-131.31967276371682  maxlinkdim=2048 maxerr=1.57E-10 time=19212.073
+Interim DMRG save
+After sweep 1 energy=-132.31007448367785  maxlinkdim=2048 maxerr=7.10E-10 time=49897.749
+Appending to file...
+Appending to file...
+Loading parameters from /scratch/users/nticea/48Nx_2Ny_3εp_1tpd_0.5tpp_0Upd_3Upp_8Udd_0.125doping_0.5ω_0.1g0pp_0.1g0dd_0g1pd_0g1dp_0g1pp.h5
+Loading DMRG results
+After sweep 1 energy=-132.6240487929715  maxlinkdim=2048 maxerr=8.88E-10 time=84788.409
+Appending to file...
+Loading parameters from /scratch/users/nticea/48Nx_2Ny_3εp_1tpd_0.5tpp_0Upd_3Upp_8Udd_0.125doping_0.5ω_0.1g0pp_0.1g0dd_0g1pd_0g1dp_0g1pp.h5
+Loading DMRG results
+After sweep 1 energy=-132.78519870019994  maxlinkdim=2048 maxerr=9.90E-10 time=70544.741
+Interim DMRG save
+After sweep 1 energy=-133.53247069916472  maxlinkdim=2048 maxerr=1.56E-09 time=63785.217
+Appending to file...
+Appending to file...
+Appending to file...
+Loading parameters from /scratch/users/nticea/48Nx_2Ny_3εp_1tpd_0.5tpp_0Upd_3Upp_8Udd_0.125doping_0.5ω_0.1g0pp_0.1g0dd_0g1pd_0g1dp_0g1pp.h5
+Loading DMRG results
+Appending to file...
+Appending to file...
+Loading parameters from /scratch/users/nticea/48Nx_2Ny_3εp_1tpd_0.5tpp_0Upd_3Upp_8Udd_0.125doping_0.5ω_0.1g0pp_0.1g0dd_0g1pd_0g1dp_0g1pp.h5
+Loading DMRG results
+After sweep 1 energy=-133.7194101943897  maxlinkdim=2048 maxerr=1.25E-09 time=81337.126
+Interim DMRG save
+After sweep 1 energy=-133.7807323505042  maxlinkdim=2048 maxerr=1.26E-09 time=81642.300
