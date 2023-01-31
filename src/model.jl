@@ -929,11 +929,13 @@ function Π̂(sites, s1::Int, s2::Int)
     Π = 1/sqrt(2)*(Π1 + Π2)
 end
 
+"""
+This is my operator 
+"""
 function Δ̂(sites, s1::Int, s2::Int)
-    # Δ = 1/sqrt(2)*(op("Cup",sites[s1])*op("Cdn",sites[s2])
-    #                         - op("Cdn",sites[s1])*op("Cup",sites[s2]))
+    # Δ_ij = 1/√2 * (c↑i c↓j - c↓i c↑j)
 
-    if s1 > s2 # ordering matters! these are fermions we're talking about
+    if s1 > s2 # ordering matters! 
         @warn "s1 > s2"
         s1, s2 = s2, s1
     end
@@ -956,6 +958,9 @@ function Δ̂(sites, s1::Int, s2::Int)
     Δ = 1/sqrt(2)*(Δ1 - Δ2)
 end
 
+"""
+This is my code for applying the operator to an MPS at sites s1 and s2 
+"""
 function apply_twosite_operator(ϕ::MPS, opname::String, sites, s1::Int, s2::Int)
     ϕ = copy(ϕ)
     if opname == "pSC"
