@@ -18,55 +18,13 @@ function dmrg_run(Nx, Ny, yperiodic,
     checkpoint_path=@__DIR__,
     results_path=@__DIR__)
 
-    param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Vpd)Vpd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ωB1)ωB1_$(ωA1)ωA1_$(gB1)gB1_$(gA1)gA1"
-    save_path = joinpath(checkpoint_path, param_stamp * ".h5")
-    results_save_path = joinpath(results_path, param_stamp * "_results.h5")
-
-    # Create the output file 
-    # output_path = joinpath(@__DIR__,param_stamp*"_out.log")
-    # try
-    #     open(output_path, "a") do s
-    #         println(s, "Appending to file...")
-    #     end
-    # catch
-    #     touch(output_path)
-    #     open(output_path, "w") do s
-    #         println(s, "Creating a new file...")
-    #     end
-    # end
-
     ## CODE ## 
-    global params
     global dmrg_results
     global TBHModel
     global eq_corr
 
-    # Write everything to my output file 
-    # open(output_path, "a") do io
-    #     redirect_stdout(io) do 
-
-    # try
-    #     global params = load_params(save_path)
-    #     println("Loading parameters from ", save_path)
-    # catch 
-    #     global params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd, 
-    #                     tpp=tpp, Vpd=Vpd, Upp=Upp, Udd=Udd, 
-    #                     ωB1=ωB1, ωA1=ωA1, gB1=gB1, gA1=gA1,doping=doping, 
-    #                     dim_copper_mode_1=dim_copper_mode_1, dim_copper_mode_2=dim_copper_mode_2, 
-    #                     dim_copper_mode_3=dim_copper_mode_3,
-    #                     dim_oxygen_x_mode_1=dim_oxygen_x_mode_1, dim_oxygen_x_mode_2=dim_oxygen_x_mode_2, 
-    #                     dim_oxygen_x_mode_3=dim_oxygen_x_mode_3,
-    #                     dim_oxygen_y_mode_1=dim_oxygen_y_mode_1, dim_oxygen_y_mode_2=dim_oxygen_y_mode_2, 
-    #                     dim_oxygen_y_mode_3=dim_oxygen_y_mode_3,
-    #                     DMRG_numsweeps=DMRG_numsweeps,
-    #                     DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff)
-    #     println("Initializing parameters...")
-    #     save_structs(params, save_path)
-    #     println("Saving parameters to ", save_path)
-    # end
-
     # Re-initializing the parameters every time in case we've updated the DMRG parameters
-    global params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd,
+    params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, tpd=tpd,
         tpp=tpp, Vpd=Vpd, Upp=Upp, Udd=Udd,
         ωB1=ωB1, ωA1=ωA1, gB1=gB1, gA1=gA1, doping=doping,
         dim_copper_mode_1=dim_copper_mode_1, dim_copper_mode_2=dim_copper_mode_2,
@@ -78,10 +36,16 @@ function dmrg_run(Nx, Ny, yperiodic,
         DMRG_numsweeps=DMRG_numsweeps, DMRG_noise=DMRG_noise,
         DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff)
     println("Initializing parameters...")
-    save_structs(params, save_path)
 
     λ = calculate_λ(params)
     @show λ
+
+    ## SAVING ## 
+    param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Vpd)Vpd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ωB1)ωB1_$(ωA1)ωA1_$(gB1)gB1_$(gA1)gA1"
+    save_path = joinpath(checkpoint_path, param_stamp * ".h5")
+    results_save_path = joinpath(results_path, param_stamp * "_results.h5")
+
+    save_structs(params, save_path)
 
     # Initialize the model (sites and MPO)
     global TBHModel = ThreeBandModel(params)
@@ -125,8 +89,6 @@ function dmrg_run(Nx, Ny, yperiodic,
         println("Interim DMRG save")
     end
 end
-#     end
-# end
 
 function correlations_run(Nx, Ny, yperiodic,
     μ, εd, εp, tpd, tpp, Vpd, Upp, Udd,
@@ -139,25 +101,8 @@ function correlations_run(Nx, Ny, yperiodic,
     save_path = joinpath(checkpoint_path, param_stamp * ".h5")
     results_save_path = joinpath(results_path, param_stamp * "_results.h5")
 
-    # Create the output file 
-    # output_path = joinpath(@__DIR__,param_stamp*"_out.log")
-    # try
-    #     open(output_path, "a") do s
-    #         println(s, "Appending to file...")
-    #     end
-    # catch
-    #     touch(output_path)
-    #     open(output_path, "w") do s
-    #         println(s, "Creating a new file...")
-    #     end
-    # end
-
     ## CODE ## 
     global eq_corr
-
-    # Write everything to my output file 
-    # open(output_path, "a") do io
-    #     redirect_stdout(io) do 
 
     # Load in the parameters 
     p = load_params(save_path)
@@ -184,7 +129,7 @@ function correlations_run(Nx, Ny, yperiodic,
     global eq_corr.stop = stop
     global eq_corr.dSC_dxdx = dSC_dxdx
     save_structs(eq_corr, results_save_path)
-    println("Saving dSC correlations for py-px bond...")
+    println("Saving dSC correlations for dx-dx bond...")
 
     start, stop, spin_corr = compute_equilibrium_onsite_correlation(dmrg_results, HM, p, "dx-dx", "spin")
     global eq_corr.start = start

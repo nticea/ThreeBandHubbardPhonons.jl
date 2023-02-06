@@ -158,15 +158,15 @@ function _plot_equilibrium_correlations_fitted(corrs, corrtype; fit_type=nothing
         end
     end
 
-    plot(log10.(xrange), log10.(abs.(corrs)))
-    title!(corrtype * "-" * corrtype * " correlation", fontsize=8)
+    p = plot(log10.(xrange), log10.(abs.(corrs)))
+    p = title!(p, corrtype * "-" * corrtype * " correlation", fontsize=8)
     if corrtype == "dSC_dydy"
-        xlabel!("Distance from centre site (log10)")
+        p = xlabel!(p, "Distance from centre site (log10)")
     end
     if corrtype == "spin"
-        ylabel!("Correlation (log10)")
+        p = ylabel!(p, "Correlation (log10)")
     end
-    plot!(log10.(xrange), log10.(fit), label="$type, k=$b")
+    p = plot!(p, log10.(xrange), log10.(fit), label="$type, k=$b")
 end
 
 function _plot_equilibrium_correlations(corrs, corrtype)
