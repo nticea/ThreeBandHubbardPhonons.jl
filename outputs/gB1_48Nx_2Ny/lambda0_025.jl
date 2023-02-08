@@ -79,7 +79,7 @@ PY_DIM_3 = 1
 # overwrite_sweeps = false
 
 DMRG_numsweeps = 30 # total number of iterations 
-DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to DMRG_numsweeps
+DMRG_numsweeps_per_save = 1 # If don't want to save regularly, just set this to DMRG_numsweeps
 DMRG_maxdim = [4000]
 DMRG_noise = [1E-7, 1E-8, 1E-9, 1E-10, 0]
 DMRG_cutoff = 1E-12
