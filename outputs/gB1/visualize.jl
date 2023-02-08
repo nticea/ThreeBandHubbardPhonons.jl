@@ -26,26 +26,30 @@ do_save = true
 do_eq_corr = true
 
 ## LOAD RESULTS AND PLOT ##
-dmrg_results = load_dmrg_results_minimal(loadpath)
+dmrg_results = load_dmrg_results_minimal(loadpath_0_00025)
 plotd = plot_densities(dmrg_results)
 
+cmap = cgrad(:Set1_5, 5, categorical=true)
 λs = [0, 0.25, 0.025, 0.025, 0.00025]
 loadpaths = [loadpath_0, loadpath_0_25, loadpath_0_025, loadpath_0_0025, loadpath_0_00025]
 
 global p = plot()
-for (λ, loadpath) in zip(λs, loadpaths)
-    corrs = load_equilibrium_correlations(loadpath).dSC_dxdx
+for (i, (λ, loadpath)) in enumerate(zip(λs, loadpaths))
+    corrs = load_equilibrium_correlations(loadpath).dSC_py1px2
     corrs = corrs[1:end] # discard the correlation at zero distance (for now...)
     xrange = collect(1:length(corrs))
 
     # Do fits
     type, a, b, fit = compare_fits(xrange, abs.(corrs))
-    global p = plot!(p, log10.(xrange), log10.(abs.(corrs)), label="λ=$(λ)")
-    global p = plot!(p, log10.(xrange), log10.(fit), label="$type, k=$b")
+    global p = plot!(p, log10.(xrange), log10.(abs.(corrs)), label="λ=$(λ)", c=cmap[i])
+    global p = scatter(p, log10.(xrange), log10.(abs.(corrs)), label=nothing)
+    global p = plot!(p, log10.(xrange), log10.(fit), label="$type, k=$b", c=cmap[i])
 end
 
-global p = title!(p, "dx-dx correlation")
+global p = title!(p, "16x2 chain, dSC_py1px2 correlation")
 plot(p)
+
+savefig(p, "16x2_dSC_py1px2.png")
 
 
 
