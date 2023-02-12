@@ -11,8 +11,8 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx = 32
-Ny = 2
+Nx = 16
+Ny = 1
 yperiodic = true
 
 μ = 0
@@ -27,7 +27,7 @@ doping = 0.125
 ωA1 = 0
 ωB1 = 1
 gA1 = 0
-gB1 = 0.3162
+gB1 = 1.75
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
@@ -37,7 +37,7 @@ COPPER_DIM_3 = 1
 PX_DIM_1 = 1
 PX_DIM_2 = 1
 PX_DIM_3 = 1
-PY_DIM_1 = 3
+PY_DIM_1 = 22
 PY_DIM_2 = 1
 PY_DIM_3 = 1
 
@@ -77,13 +77,6 @@ DMRG_noise = [1E-6, 1E-7, 1E-8, 1E-9, 0,
         0, 0, 0, 0, 0]
 DMRG_cutoff = 1E-12
 overwrite_sweeps = false
-
-# DMRG_numsweeps = 30 # total number of iterations 
-# DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to DMRG_numsweeps
-# DMRG_maxdim = [4000]
-# DMRG_noise = [1E-7, 1E-8, 1E-9, 1E-10, 0]
-# DMRG_cutoff = 1E-12
-# overwrite_sweeps = true
 
 # DMRG_numsweeps = 20 # total number of iterations 
 # DMRG_numsweeps_per_save = 3

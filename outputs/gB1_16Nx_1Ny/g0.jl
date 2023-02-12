@@ -11,8 +11,8 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx = 32
-Ny = 2
+Nx = 16
+Ny = 1
 yperiodic = true
 
 μ = 0
@@ -78,11 +78,12 @@ DMRG_noise = [1E-6, 1E-7, 1E-8, 1E-9, 0,
 DMRG_cutoff = 1E-12
 overwrite_sweeps = false
 
-# DMRG_numsweeps = 20 # total number of iterations 
-# DMRG_numsweeps_per_save = 3
-# DMRG_maxdim = [2500]
-# DMRG_noise = [1E-6, 1E-7, 1E-8, 1E-9, 0]
+# DMRG_numsweeps = 30 # total number of iterations 
+# DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to DMRG_numsweeps
+# DMRG_maxdim = [4000]
+# DMRG_noise = [1E-7, 1E-8, 1E-9, 1E-10, 0]
 # DMRG_cutoff = 1E-12
+# overwrite_sweeps = true
 
 ## SAVE OUT INFO ##
 println("Running DMRG...")

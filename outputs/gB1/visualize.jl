@@ -35,7 +35,7 @@ loadpaths = [loadpath_0, loadpath_0_25, loadpath_0_025, loadpath_0_0025, loadpat
 
 global p = plot()
 for (i, (λ, loadpath)) in enumerate(zip(λs, loadpaths))
-    corrs = load_equilibrium_correlations(loadpath).dSC_py1px2
+    corrs = load_equilibrium_correlations(loadpath).spin
     corrs = corrs[1:end] # discard the correlation at zero distance (for now...)
     xrange = collect(1:length(corrs))
 
@@ -46,10 +46,10 @@ for (i, (λ, loadpath)) in enumerate(zip(λs, loadpaths))
     global p = plot!(p, log10.(xrange), log10.(fit), label="$type, k=$b", c=cmap[i])
 end
 
-global p = title!(p, "16x2 chain, dSC_py1px2 correlation")
+global p = title!(p, "16x2 chain, spin correlation")
 plot(p)
 
-savefig(p, "16x2_dSC_py1px2.png")
+savefig(p, "16x2_spin.png")
 
 
 

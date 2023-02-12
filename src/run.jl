@@ -77,7 +77,7 @@ function dmrg_run(Nx, Ny, yperiodic,
             overwrite_sweeps=overwrite_sweeps, disk_save=disk_save)
         # benchmarking 
         ψ_gs = dmrg_results.ground_state
-        @show linkdims(ψ_gs)
+        mldim = maxlinkdim(ψ_gs)
 
         dmrg_results_minimal = DMRGResultsMinimal(dmrg_results.ground_state_energy,
             dmrg_results.ground_state_entropy,
@@ -86,6 +86,11 @@ function dmrg_run(Nx, Ny, yperiodic,
             dmrg_results.spin_density)
         save_structs(dmrg_results, save_path)
         save_structs(dmrg_results_minimal, results_save_path)
+
+        # save also an extra file for each maxdim
+        maxdim_results_save_path = joinpath(results_path, param_stamp * "_$(mldim)maxdim" * "_results.h5")
+        save_structs(dmrg_results_minimal, maxdim_results_save_path)
+
         println("Interim DMRG save")
     end
 end

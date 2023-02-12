@@ -12,7 +12,7 @@ ITensors.set_warn_order(50)
 
 # Model 
 Nx = 32
-Ny = 2
+Ny = 1
 yperiodic = true
 
 μ = 0
@@ -27,7 +27,7 @@ doping = 0.125
 ωA1 = 0
 ωB1 = 1
 gA1 = 0
-gB1 = 0.03162
+gB1 = 1
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
@@ -104,6 +104,7 @@ dmrg_run(Nx, Ny, yperiodic,
         DMRG_maxdim, DMRG_cutoff,
         DMRG_numsweeps_per_save;
         overwrite_sweeps=overwrite_sweeps,
+        disk_save=false,
         checkpoint_path="/scratch/users/nticea",
         results_path=@__DIR__)
 

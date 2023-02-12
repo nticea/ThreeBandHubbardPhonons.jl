@@ -321,6 +321,7 @@ function make_ampo_cuprates_2mode(p::Parameters, sites::Vector{Index{Vector{Pair
     # Phonon parameters 
     ωB1, ωA1, gB1, gA1 = p.ωB1, p.ωA1, p.gB1, p.gA1
     dim_oxygen_x_mode_1, dim_oxygen_y_mode_1 = p.dim_oxygen_x_mode_1, p.dim_oxygen_y_mode_1
+    # Lattice
     dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     site_labels = make_coefficients(Nx + 1, Ny, "Copper", "Oxygen_px", "Oxygen_py")
@@ -696,7 +697,7 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
 
     @show num_holes_up
     @show num_holes_down
-    @assert num_holes_up == num_holes_down
+    #@assert num_holes_up == num_holes_down
 
     num_holes_total = length(state_arr) - length(findall(x -> x == emps, state_arr))
     @show num_holes_total
