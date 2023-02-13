@@ -46,6 +46,7 @@ function dmrg_run(Nx, Ny, yperiodic,
     results_save_path = joinpath(results_path, param_stamp * "_results.h5")
 
     save_structs(params, save_path)
+    save_structs(params, results_save_path)
 
     # Initialize the model (sites and MPO)
     global TBHModel = ThreeBandModel(params)
