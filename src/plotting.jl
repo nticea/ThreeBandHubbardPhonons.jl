@@ -18,10 +18,9 @@ end
 
 function plot_charge_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal})
     n = dmrg_results.charge_density'
-    n = n[1:end-2, :] # remove the last rung
     p = plot(1:length(n[1:3:end, 1]), n[1:3:end, :], label="py")
     plot!(1:length(n[2:3:end, 1]), n[2:3:end, :], label="d")
-    plot!(1:length(n[3:3:end, 1]), n[3:3:end, :], label="px")
+    plot!(1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="px")
     ylabel!("⟨n⟩")
     xlabel!("Site")
     title!("Electron density")
@@ -55,10 +54,11 @@ function plot_phonon_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}
 end
 
 function _plot_phonon_density(n::AbstractArray; ylims=nothing)
-    n = n[1:end-2, :] # remove the last rung
-    p = plot(1:length(n[1:3:end, 1]), n[1:3:end, :], label="py")
-    plot!(1:length(n[2:3:end, 1]), n[2:3:end, :], label="d")
-    plot!(1:length(n[3:3:end, 1]), n[3:3:end, :], label="px")
+    n = sum(n, dims=2)
+    p = plot(1:length(n[1:3:end]), n[1:3:end])
+    # p = plot(1:length(n[1:3:end, 1]), n[1:3:end, :], label="py")
+    # plot!(1:length(n[2:3:end, 1]), n[2:3:end, :], label="d")
+    # plot!(1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="px")
     if !isnothing(ylims)
         ylims!((ylim[0], ylim[1]))
     end
@@ -70,10 +70,9 @@ end
 
 function plot_spin_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}; ylims=nothing)
     n = dmrg_results.spin_density'
-    n = n[1:end-2, :] # remove the last rung
     p = plot(1:length(n[1:3:end, 1]), n[1:3:end, :], label="py")
     plot!(1:length(n[2:3:end, 1]), n[2:3:end, :], label="d")
-    plot!(1:length(n[3:3:end, 1]), n[3:3:end, :], label="px")
+    plot!(1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="px")
     if !isnothing(ylims)
         ylims!((ylim[0], ylim[1]))
     end

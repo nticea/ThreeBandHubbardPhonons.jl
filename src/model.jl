@@ -369,6 +369,15 @@ function make_ampo_cuprates_2mode(p::Parameters, sites::Vector{Index{Vector{Pair
         end
     end
 
+    # Deal with the end sites also 
+    # if gB1 > 0 && dim_oxygen_y_mode_1 > 1
+    #     for n in (3*p.N+2):2:p.Nsites
+    #         # n is the (MPS) index of the py site 
+    #         ampo += -gB1, "B1dag+B1", n, "Ntot", n
+    #         @show n
+    #     end
+    # end
+
     # repulsion copper-oxygen
     for b in dp_lattice
         ampo .+= Vpd, "Nup", b.s1, "Nup", b.s2
