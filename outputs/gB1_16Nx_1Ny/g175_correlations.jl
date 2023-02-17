@@ -29,6 +29,18 @@ doping = 0.125
 gA1 = 0
 gB1 = 1.75
 
+## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
+# Subtract 1 from this to get the maximum number of phonons allowed in that mode 
+COPPER_DIM_1 = 1
+COPPER_DIM_2 = 1
+COPPER_DIM_3 = 1
+PX_DIM_1 = 1
+PX_DIM_2 = 1
+PX_DIM_3 = 1
+PY_DIM_1 = 22
+PY_DIM_2 = 1
+PY_DIM_3 = 1
+
 
 println("Computing correlations...")
 correlations_run(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd,
