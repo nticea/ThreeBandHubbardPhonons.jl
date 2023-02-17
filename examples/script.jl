@@ -11,7 +11,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx = 8
+Nx = 16
 Ny = 1
 yperiodic = false
 
@@ -27,7 +27,7 @@ doping = 0.125
 ωA1 = 0
 ωB1 = 1
 gA1 = 0
-gB1 = 1.3
+gB1 = 0.1
 
 λ = gB1^2 / (4 * ωB1)
 @show λ
@@ -40,7 +40,7 @@ COPPER_DIM_3 = 1
 PX_DIM_1 = 1
 PX_DIM_2 = 1
 PX_DIM_3 = 1
-PY_DIM_1 = 15
+PY_DIM_1 = 3
 PY_DIM_2 = 1
 PY_DIM_3 = 1
 

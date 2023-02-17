@@ -370,13 +370,13 @@ function make_ampo_cuprates_2mode(p::Parameters, sites::Vector{Index{Vector{Pair
     end
 
     # Deal with the end sites also 
-    # if gB1 > 0 && dim_oxygen_y_mode_1 > 1
-    #     for n in (3*p.N+2):2:p.Nsites
-    #         # n is the (MPS) index of the py site 
-    #         ampo += -gB1, "B1dag+B1", n, "Ntot", n
-    #         @show n
-    #     end
-    # end
+    if gB1 > 0 && dim_oxygen_y_mode_1 > 1
+        for n in (3*p.N+2):2:p.Nsites
+            # n is the (MPS) index of the py site 
+            ampo += -gB1, "B1dag+B1", n, "Ntot", n
+            @show n
+        end
+    end
 
     # repulsion copper-oxygen
     for b in dp_lattice
@@ -683,6 +683,7 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
     inds_arr = findall(x -> x == ups, state_arr)[begin:2:end]
     state_arr[inds_arr] .= downs
     # Last rung does not get any fermions
+    ## SHOULD COMMENT OUT ## 
     state_arr[end-2*Ny+1:end] .= emps
 
     # Account for doping
@@ -1044,7 +1045,7 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
     buffer=nothing)
 
     if isnothing(buffer)
-        buffer = floor(Int, p.Nx / 5)
+        buffer = floor(Int, p.Nx / 4)
     end
     # Compute spin and charge correlations
     println("Computing spin correlations for dx-dx bond")
@@ -1129,7 +1130,7 @@ function compute_equilibrium_onsite_correlation(dmrg_results::DMRGResults,
 
     Nx, Ny = p.Nx, p.Ny
     if isnothing(buffer)
-        buffer = floor(Int, Nx / 5)
+        buffer = floor(Int, Nx / 4)
     end
     ϕ = copy(dmrg_results.ground_state)
     Nsites = length(ϕ)
@@ -1155,7 +1156,7 @@ function compute_equilibrium_pairfield_correlation(dmrg_results::DMRGResults,
 
     Nx, Ny = p.Nx, p.Ny
     if isnothing(buffer)
-        buffer = floor(Int, Nx / 5)
+        buffer = floor(Int, Nx / 4)
     end
     ϕ = copy(dmrg_results.ground_state)
     Nsites = length(ϕ)

@@ -13,7 +13,7 @@ g1_loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BH
 g15_loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/gB1_16Nx_2Ny/16Nx_2Ny_3εp_1tpd_0.5tpp_0Vpd_3Upp_8Udd_0.125doping_1ωB1_0ωA1_1.5gB1_0gA1_results.h5"
 g175_loadpath = "/Users/nicole/Dropbox/Grad school/Devereaux lab/Hubbard model/3BHPhonons/ThreeBandHubbardPhonons.jl/outputs/gB1_16Nx_2Ny/16Nx_2Ny_3εp_1tpd_0.5tpp_0Vpd_3Upp_8Udd_0.125doping_1ωB1_0ωA1_1.75gB1_0gA1_results.h5"
 
-loadpath = g1_loadpath
+loadpath = g175_loadpath
 
 # Flags 
 do_fit = true

@@ -27,7 +27,7 @@ doping = 0.125
 ωA1 = 0
 ωB1 = 1
 gA1 = 0
-gB1 = 1.75
+gB1 = 10
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
@@ -37,13 +37,13 @@ COPPER_DIM_3 = 1
 PX_DIM_1 = 1
 PX_DIM_2 = 1
 PX_DIM_3 = 1
-PY_DIM_1 = 22
+PY_DIM_1 = 3
 PY_DIM_2 = 1
 PY_DIM_3 = 1
 
 # DMRG parameters 
 DMRG_numsweeps = 80 # total number of iterations 
-DMRG_numsweeps_per_save = 2 # If don't want to save regularly, just set this to DMRG_numsweeps
+DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to DMRG_numsweeps
 DMRG_maxdim = [50, 50, 50, 50, 50,
         100, 100, 100, 100, 100,
         200, 200, 200, 200, 200,
@@ -79,7 +79,7 @@ DMRG_cutoff = 1E-12
 overwrite_sweeps = false
 
 # DMRG_numsweeps = 20 # total number of iterations 
-# DMRG_numsweeps_per_save = 2
+# DMRG_numsweeps_per_save = 3
 # DMRG_maxdim = [2500]
 # DMRG_noise = [1E-6, 1E-7, 1E-8, 1E-9, 0]
 # DMRG_cutoff = 1E-12
@@ -104,10 +104,10 @@ dmrg_run(Nx, Ny, yperiodic,
         DMRG_numsweeps_per_save;
         overwrite_sweeps=overwrite_sweeps,
         disk_save=false,
-        checkpoint_path="/scratch/users/nticea",
+        checkpoint_path="/oak/stanford/groups/tpd/nticea/threeband/gB1/",
         results_path=@__DIR__)
 
 println("Computing correlations...")
 correlations_run(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd,
-        ωB1, ωA1, gB1, gA1, doping; checkpoint_path="/scratch/users/nticea",
+        ωB1, ωA1, gB1, gA1, doping; checkpoint_path="/oak/stanford/groups/tpd/nticea/threeband/gB1/",
         results_path=@__DIR__)
