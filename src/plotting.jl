@@ -30,15 +30,16 @@ end
 function plot_multiple_correlations(loadpaths, gs)
     p1 = _plot_multiple_corrs(loadpaths, gs, "spin")
     p2 = _plot_multiple_corrs(loadpaths, gs, "charge")
-    p3 = _plot_multiple_corrs(loadpaths, gs, "dSC_dxdx")
-    p4 = _plot_multiple_corrs(loadpaths, gs, "dSC_dpx")
-    p5 = _plot_multiple_corrs(loadpaths, gs, "dSC_dydy")
-    p6 = _plot_multiple_corrs(loadpaths, gs, "dSC_pyd")
-    p7 = _plot_multiple_corrs(loadpaths, gs, "dSC_pypx")
-    p8 = _plot_multiple_corrs(loadpaths, gs, "dSC_py1px2")
+    p3 = _plot_multiple_corrs(loadpaths, gs, "particle")
+    p4 = _plot_multiple_corrs(loadpaths, gs, "dSC_dxdx")
+    p5 = _plot_multiple_corrs(loadpaths, gs, "dSC_dpx")
+    p6 = _plot_multiple_corrs(loadpaths, gs, "dSC_dydy")
+    p7 = _plot_multiple_corrs(loadpaths, gs, "dSC_pyd")
+    p8 = _plot_multiple_corrs(loadpaths, gs, "dSC_pypx")
+    p9 = _plot_multiple_corrs(loadpaths, gs, "dSC_py1px2")
 
-    plot(p1, p2, p3, p4, p5, p6, p7, p8,
-        layout=Plots.grid(2, 4, widths=(1 / 4, 1 / 4, 1 / 4, 1 / 4, 1 / 4, 1 / 4, 1 / 4, 1 / 4)), size=(2000, 800))
+    plot(p1, p2, p3, p4, p5, p6, p7, p8, p9,
+        layout=Plots.grid(3, 3, widths=(1 / 3, 1 / 3, 1 / 3)), size=(1500, 1000))
 end
 
 function _plot_multiple_corrs(loadpaths, gs, corrtype::String)
@@ -53,6 +54,8 @@ function _plot_multiple_corrs(loadpaths, gs, corrtype::String)
                 corrs = eq_corrs.spin
             elseif corrtype == "charge"
                 corrs = eq_corrs.charge
+            elseif corrtype == "particle"
+                corrs = eq_corrs.particle
             elseif corrtype == "dSC_dxdx"
                 corrs = eq_corrs.dSC_dxdx
             elseif corrtype == "dSC_dpx"

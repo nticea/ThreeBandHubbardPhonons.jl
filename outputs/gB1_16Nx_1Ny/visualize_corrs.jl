@@ -19,7 +19,6 @@ do_save = true
 
 ## PLOTTING ## 
 
-
 gs = [0, 1, 1.5, 1.75]
 loadpaths = [g0_loadpath, g1_loadpath, g15_loadpath, g175_loadpath]
 
