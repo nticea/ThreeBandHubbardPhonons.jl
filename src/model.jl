@@ -88,6 +88,7 @@ mutable struct EquilibriumCorrelations
     stop
     spin
     charge
+    particle
     dSC_dxdx
     dSC_dpx
     dSC_dydy
@@ -321,6 +322,7 @@ function make_ampo_cuprates_2mode(p::Parameters, sites::Vector{Index{Vector{Pair
     # Phonon parameters 
     ωB1, ωA1, gB1, gA1 = p.ωB1, p.ωA1, p.gB1, p.gA1
     dim_oxygen_x_mode_1, dim_oxygen_y_mode_1 = p.dim_oxygen_x_mode_1, p.dim_oxygen_y_mode_1
+    # Lattice
     dp_lattice = OxygenCopper_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     pp_lattice = OxygenOxygen_lattice(Nx, Ny; yperiodic=yperiodic, alternate_sign=true)
     site_labels = make_coefficients(Nx + 1, Ny, "Copper", "Oxygen_px", "Oxygen_py")
@@ -365,6 +367,15 @@ function make_ampo_cuprates_2mode(p::Parameters, sites::Vector{Index{Vector{Pair
             ey_site = to_site_number(p.Ny, n, "py")
             ampo += gB1, "B1dag+B1", ph_site, "Ntot", ex_site
             ampo += -gB1, "B1dag+B1", ph_site, "Ntot", ey_site
+        end
+    end
+
+    # Deal with the end sites also 
+    if gB1 > 0 && dim_oxygen_y_mode_1 > 1
+        for n in (3*p.N+2):2:p.Nsites
+            # n is the (MPS) index of the py site 
+            ampo += -gB1, "B1dag+B1", n, "Ntot", n
+            @show n
         end
     end
 
@@ -673,6 +684,7 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
     inds_arr = findall(x -> x == ups, state_arr)[begin:2:end]
     state_arr[inds_arr] .= downs
     # Last rung does not get any fermions
+    ## SHOULD COMMENT OUT ## 
     state_arr[end-2*Ny+1:end] .= emps
 
     # Account for doping
@@ -696,7 +708,7 @@ function initialize_wavefcn(HM::ThreeBandModel, p::Parameters)
 
     @show num_holes_up
     @show num_holes_down
-    @assert num_holes_up == num_holes_down
+    #@assert num_holes_up == num_holes_down
 
     num_holes_total = length(state_arr) - length(findall(x -> x == emps, state_arr))
     @show num_holes_total
@@ -1034,11 +1046,14 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
     buffer=nothing)
 
     if isnothing(buffer)
-        buffer = floor(Int, p.Nx / 5)
+        buffer = floor(Int, p.Nx / 4)
     end
     # Compute spin and charge correlations
     println("Computing spin correlations for dx-dx bond")
     start, stop, spin_corr = compute_equilibrium_onsite_correlation(dmrg_results, HM, p, "dx-dx", "spin", buffer=buffer)
+
+    println("Computing particle-particle correlations for dx-dx bond")
+    _, _, charge_corr = compute_equilibrium_onsite_correlation(dmrg_results, HM, p, "dx-dx", "particle", buffer=buffer)
 
     println("Computing charge correlations for dx-dx bond")
     _, _, charge_corr = compute_equilibrium_onsite_correlation(dmrg_results, HM, p, "dx-dx", "charge", buffer=buffer)
@@ -1119,7 +1134,7 @@ function compute_equilibrium_onsite_correlation(dmrg_results::DMRGResults,
 
     Nx, Ny = p.Nx, p.Ny
     if isnothing(buffer)
-        buffer = floor(Int, Nx / 5)
+        buffer = floor(Int, Nx / 4)
     end
     ϕ = copy(dmrg_results.ground_state)
     Nsites = length(ϕ)
@@ -1145,7 +1160,7 @@ function compute_equilibrium_pairfield_correlation(dmrg_results::DMRGResults,
 
     Nx, Ny = p.Nx, p.Ny
     if isnothing(buffer)
-        buffer = floor(Int, Nx / 5)
+        buffer = floor(Int, Nx / 4)
     end
     ϕ = copy(dmrg_results.ground_state)
     Nsites = length(ϕ)
@@ -1196,6 +1211,13 @@ function onsite_correlation(ϕ::MPS, bonds, corrtype::String, sites)
         ni = expect(ϕ, "Ntot")
         nj = ni[j]
         return ninj - nj .* (ni[indices])
+    elseif corrtype == "particle"
+        ψ = apply_onesite_operator(ϕ, "Cup", sites, j)
+        function compute_corr_particle(i::Int)
+            cψ = apply_onesite_operator(ψ, "Cdagup", sites, i)
+            return inner(ϕ, cψ)
+        end
+        return compute_corr_particle.(indices)
     elseif corrtype == "sSC"
         ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
         function compute_corr_sSC(i::Int)

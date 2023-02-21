@@ -4,15 +4,16 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 using Dates
 include(joinpath(@__DIR__, "../src/model.jl"))
 include(joinpath(@__DIR__, "../src/utilities.jl"))
+include(joinpath(@__DIR__, "../src/plotting.jl"))
 
 ITensors.set_warn_order(50)
 
 ## PARAMETERS ## 
 
 # Model 
-Nx = 48
-Ny = 2
-yperiodic = true
+Nx = 16
+Ny = 1
+yperiodic = false
 
 μ = 0
 εd = 0
@@ -24,9 +25,9 @@ Upp = 3
 Udd = 8
 doping = 0.125
 ωA1 = 0
-ωB1 = 0.1
+ωB1 = 1
 gA1 = 0
-gB1 = 0.01
+gB1 = 0.1
 
 λ = gB1^2 / (4 * ωB1)
 @show λ
@@ -44,7 +45,7 @@ PY_DIM_2 = 1
 PY_DIM_3 = 1
 
 # DMRG parameters 
-DMRG_numsweeps = 80 # total number of iterations 
+DMRG_numsweeps = 9 # total number of iterations 
 DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to DMRG_numsweeps
 DMRG_maxdim = [50, 50, 50, 50, 50,
     100, 100, 100, 100, 100,
@@ -92,7 +93,7 @@ params = parameters(Nx=Nx, Ny=Ny, yperiodic=yperiodic, μ=μ, εd=εd, εp=εp, 
     DMRG_numsweeps=DMRG_numsweeps, DMRG_noise=DMRG_noise,
     DMRG_maxdim=DMRG_maxdim, DMRG_cutoff=DMRG_cutoff);
 # The Hamiltonian MPO 
-TBHModel = ThreeBandModel(params);
+TBHModel = ThreeBandModel(params)
 
 # Run DMRG first few sweeps 
 println("Finding ground state...")
@@ -103,11 +104,10 @@ for i in 1:floor(Int, DMRG_numsweeps / DMRG_numsweeps_per_save)
     global dmrg_results = run_DMRG(dmrg_results, TBHModel, params,
         DMRG_numsweeps_per_save=DMRG_numsweeps_per_save,
         alg="divide_and_conquer", disk_save=false)
-    ψ_gs = dmrg_results.ground_state
-    @show linkdims(ψ_gs)
+    @show sum(dmrg_results.phonon_density) / params.N
 end
 plot_densities(dmrg_results)
 
 # Equilibrium correlations
 println("Computing equilibrium correlations...")
-start, stop, dSC_dxdx = @time compute_equilibrium_pairfield_correlation(dmrg_results, TBHModel, params, "dx-dx", "dx-dx", "dSC")
+start, stop, particle = @time compute_equilibrium_onsite_correlation(dmrg_results, TBHModel, params, "dx-dx", "particle")
