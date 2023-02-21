@@ -88,6 +88,7 @@ mutable struct EquilibriumCorrelations
     stop
     spin
     charge
+    particle
     dSC_dxdx
     dSC_dpx
     dSC_dydy
@@ -1051,6 +1052,9 @@ function compute_all_equilibrium_correlations(dmrg_results::DMRGResults,
     println("Computing spin correlations for dx-dx bond")
     start, stop, spin_corr = compute_equilibrium_onsite_correlation(dmrg_results, HM, p, "dx-dx", "spin", buffer=buffer)
 
+    println("Computing particle-particle correlations for dx-dx bond")
+    _, _, charge_corr = compute_equilibrium_onsite_correlation(dmrg_results, HM, p, "dx-dx", "particle", buffer=buffer)
+
     println("Computing charge correlations for dx-dx bond")
     _, _, charge_corr = compute_equilibrium_onsite_correlation(dmrg_results, HM, p, "dx-dx", "charge", buffer=buffer)
 
@@ -1207,6 +1211,13 @@ function onsite_correlation(ϕ::MPS, bonds, corrtype::String, sites)
         ni = expect(ϕ, "Ntot")
         nj = ni[j]
         return ninj - nj .* (ni[indices])
+    elseif corrtype == "particle"
+        ψ = apply_onesite_operator(ϕ, "Cup", sites, j)
+        function compute_corr_particle(i::Int)
+            cψ = apply_onesite_operator(ψ, "Cdagup", sites, i)
+            return inner(ϕ, cψ)
+        end
+        return compute_corr_particle.(indices)
     elseif corrtype == "sSC"
         ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
         function compute_corr_sSC(i::Int)

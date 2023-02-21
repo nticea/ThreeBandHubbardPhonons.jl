@@ -110,4 +110,4 @@ plot_densities(dmrg_results)
 
 # Equilibrium correlations
 println("Computing equilibrium correlations...")
-start, stop, dSC_dxdx = @time compute_equilibrium_pairfield_correlation(dmrg_results, TBHModel, params, "dx-dx", "dx-dx", "dSC")
+start, stop, particle = @time compute_equilibrium_onsite_correlation(dmrg_results, TBHModel, params, "dx-dx", "particle")

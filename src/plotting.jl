@@ -27,6 +27,65 @@ function plot_charge_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}
     return p
 end
 
+function plot_multiple_correlations(loadpaths, gs)
+    p1 = _plot_multiple_corrs(loadpaths, gs, "spin")
+    p2 = _plot_multiple_corrs(loadpaths, gs, "charge")
+    p3 = _plot_multiple_corrs(loadpaths, gs, "particle")
+    p4 = _plot_multiple_corrs(loadpaths, gs, "dSC_dxdx")
+    p5 = _plot_multiple_corrs(loadpaths, gs, "dSC_dpx")
+    p6 = _plot_multiple_corrs(loadpaths, gs, "dSC_dydy")
+    p7 = _plot_multiple_corrs(loadpaths, gs, "dSC_pyd")
+    p8 = _plot_multiple_corrs(loadpaths, gs, "dSC_pypx")
+    p9 = _plot_multiple_corrs(loadpaths, gs, "dSC_py1px2")
+
+    plot(p1, p2, p3, p4, p5, p6, p7, p8, p9,
+        layout=Plots.grid(3, 3, widths=(1 / 3, 1 / 3, 1 / 3)), size=(1500, 1000))
+end
+
+function _plot_multiple_corrs(loadpaths, gs, corrtype::String)
+    @assert length(loadpaths) == length(gs)
+    cmap = cgrad(:Set1_4, length(loadpaths), categorical=true)
+
+    p = plot()
+    for (i, (g, loadpath)) in enumerate(zip(gs, loadpaths))
+        try
+            eq_corrs = load_equilibrium_correlations(loadpath)
+            if corrtype == "spin"
+                corrs = eq_corrs.spin
+            elseif corrtype == "charge"
+                corrs = eq_corrs.charge
+            elseif corrtype == "particle"
+                corrs = eq_corrs.particle
+            elseif corrtype == "dSC_dxdx"
+                corrs = eq_corrs.dSC_dxdx
+            elseif corrtype == "dSC_dpx"
+                corrs = eq_corrs.dSC_dpx
+            elseif corrtype == "dSC_dydy"
+                corrs = eq_corrs.dSC_dydy
+            elseif corrtype == "dSC_pyd"
+                corrs = eq_corrs.dSC_pyd
+            elseif corrtype == "dSC_pypx"
+                corrs = eq_corrs.dSC_pypx
+            elseif corrtype == "dSC_py1px2"
+                corrs = eq_corrs.dSC_py1px2
+            else
+                @error "corrtype not recognized"
+            end
+
+            xrange = collect(1:length(corrs))
+
+            # Do fits
+            type, a, b, fit = compare_fits(xrange, abs.(corrs))
+            p = plot!(p, log10.(xrange), log10.(abs.(corrs)), label="gB1=$(g)", c=cmap[i])
+            p = scatter(p, log10.(xrange), log10.(abs.(corrs)), label=nothing, c=cmap[i])
+            p = plot!(p, log10.(xrange), log10.(fit), label="$type, k=$b", c=cmap[i])
+        catch
+            println("gB1=$(g) not yet available")
+        end
+    end
+    p = title!(p, corrtype * " correlation")
+end
+
 function plot_phonon_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}, mode::Int; ylims=nothing)
     n = dmrg_results.phonon_density[:, :, mode]
     _plot_phonon_density(n', ylims=ylims)
