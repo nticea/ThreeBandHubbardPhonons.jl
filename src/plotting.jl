@@ -86,18 +86,68 @@ function _plot_multiple_corrs(loadpaths, gs, corrtype::String)
     p = title!(p, corrtype * " correlation")
 end
 
+function plot_multiple_densities(loadpaths, gs)
+    @assert length(loadpaths) == length(gs)
+    cmap = cgrad(:Set1_4, length(loadpaths), categorical=true)
+
+    cd = plot(title="Charge density d")
+    cpx = plot(title="Charge density px")
+    cpy = plot(title="Charge density py")
+    sd = plot(title="Spin density d")
+    spx = plot(title="Spin density px")
+    spy = plot(title="Spin density py")
+    ph = plot(title="Phonon density", xlabel="Site")
+
+    for (i, (g, loadpath)) in enumerate(zip(gs, loadpaths))
+        try
+            dmrg_results = load_dmrg_results_minimal(loadpath)
+
+            # electron density 
+            n = dmrg_results.charge_density'
+            cd = plot(cd, 1:length(n[2:3:end, 1]), n[2:3:end, :], label="gB1=$(g)", c=cmap[i])
+            cpx = plot(cpx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="gB1=$(g)", c=cmap[i])
+            cpy = plot(cpy, 1:length(n[1:3:end, 1]), n[1:3:end, :], label="gB1=$(g)", c=cmap[i])
+
+            # spin density 
+            n = dmrg_results.spin_density'
+            spy = plot(spy, 1:length(n[1:3:end, 1]), n[1:3:end, :], label="gB1=$(g)", c=cmap[i])
+            sd = plot(sd, 1:length(n[2:3:end, 1]), n[2:3:end, :], label="gB1=$(g)", c=cmap[i])
+            spx = plot(spx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="gB1=$(g)", c=cmap[i])
+
+            # phonon density 
+            n = dmrg_results.phonon_density
+            nmodes = size(n)[3]
+            # find the modes with a nonzero number of phonons 
+            toplot = zeros(size(n)[1:2])
+            for m in 1:nmodes
+                mode = n[:, :, m]
+                if has_nonzero_elements(mode)
+                    toplot += mode
+                end
+            end
+            n = sum(toplot', dims=2)
+            ph = plot(ph, 1:length(n[1:3:end]), n[1:3:end], label="gB1=$(g)", c=cmap[i])
+
+        catch e
+            @show e
+            println("gB1=$(g) not yet available")
+        end
+    end
+    plot(cd, cpy, cpx, sd, spy, spx, ph,
+        layout=Plots.grid(3, 3, widths=(1 / 3, 1 / 3, 1 / 3)), size=(1500, 1000))
+end
+
 function plot_phonon_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}, mode::Int; ylims=nothing)
     n = dmrg_results.phonon_density[:, :, mode]
     _plot_phonon_density(n', ylims=ylims)
 end
 
+function has_nonzero_elements(a)
+    nonzero_inds = findall(x -> x > 0, a)
+    return length(nonzero_inds) > 0
+end
+
 function plot_phonon_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}; ylims=nothing)
-
-    function has_nonzero_elements(a)
-        nonzero_inds = findall(x -> x > 0, a)
-        return length(nonzero_inds) > 0
-    end
-
     n = dmrg_results.phonon_density
     nmodes = size(n)[3]
     # find the modes with a nonzero number of phonons 
