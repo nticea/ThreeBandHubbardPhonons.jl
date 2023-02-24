@@ -125,7 +125,8 @@ function correlations_run(Nx, Ny, yperiodic,
     try
         global eq_corr = load_equilibrium_correlations(results_save_path)
         println("Loading equilibrium correlations")
-    catch
+    catch e
+        @show e
         global eq_corr = EquilibriumCorrelations(0, 0, [0], [0], [0], [0], [0], [0], [0], [0], [0])
         println("Computing equilibrium correlations")
     end

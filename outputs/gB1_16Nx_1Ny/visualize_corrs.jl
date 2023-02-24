@@ -22,7 +22,7 @@ do_save = true
 gs = [0, 1, 1.5]#, 1.75]
 loadpaths = [g0_loadpath, g1_loadpath, g15_loadpath]#, g175_loadpath]
 
-plot_multiple_correlations(loadpaths, gs)
+plot_multiple_correlations(loadpaths, gs, fit_subset=false)
 
 
 

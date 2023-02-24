@@ -4,6 +4,7 @@ using FFTW
 using NPZ
 using Statistics
 using CurveFit
+using Images: findlocalmaxima, findlocalminima
 include(joinpath(@__DIR__, "model.jl"))
 
 ## EQUILIBRIUM CORRELATIONS ##
@@ -27,22 +28,22 @@ function plot_charge_density(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}
     return p
 end
 
-function plot_multiple_correlations(loadpaths, gs)
-    p1 = _plot_multiple_corrs(loadpaths, gs, "spin")
-    p2 = _plot_multiple_corrs(loadpaths, gs, "charge")
-    p3 = _plot_multiple_corrs(loadpaths, gs, "particle")
-    p4 = _plot_multiple_corrs(loadpaths, gs, "dSC_dxdx")
-    p5 = _plot_multiple_corrs(loadpaths, gs, "dSC_dpx")
-    p6 = _plot_multiple_corrs(loadpaths, gs, "dSC_dydy")
-    p7 = _plot_multiple_corrs(loadpaths, gs, "dSC_pyd")
-    p8 = _plot_multiple_corrs(loadpaths, gs, "dSC_pypx")
-    p9 = _plot_multiple_corrs(loadpaths, gs, "dSC_py1px2")
+function plot_multiple_correlations(loadpaths, gs; fit_subset::Bool=true)
+    p1 = _plot_multiple_corrs(loadpaths, gs, "spin", fit_subset=fit_subset)
+    p2 = _plot_multiple_corrs(loadpaths, gs, "charge", fit_subset=fit_subset)
+    p3 = _plot_multiple_corrs(loadpaths, gs, "particle", fit_subset=fit_subset)
+    p4 = _plot_multiple_corrs(loadpaths, gs, "dSC_dxdx", fit_subset=fit_subset)
+    p5 = _plot_multiple_corrs(loadpaths, gs, "dSC_dpx", fit_subset=fit_subset)
+    p6 = _plot_multiple_corrs(loadpaths, gs, "dSC_dydy", fit_subset=fit_subset)
+    p7 = _plot_multiple_corrs(loadpaths, gs, "dSC_pyd", fit_subset=fit_subset)
+    p8 = _plot_multiple_corrs(loadpaths, gs, "dSC_pypx", fit_subset=fit_subset)
+    p9 = _plot_multiple_corrs(loadpaths, gs, "dSC_py1px2", fit_subset=fit_subset)
 
     plot(p1, p2, p3, p4, p5, p6, p7, p8, p9,
         layout=Plots.grid(3, 3, widths=(1 / 3, 1 / 3, 1 / 3)), size=(1500, 1000))
 end
 
-function _plot_multiple_corrs(loadpaths, gs, corrtype::String)
+function _plot_multiple_corrs(loadpaths, gs, corrtype::String; fit_subset::Bool=true)
     @assert length(loadpaths) == length(gs)
     cmap = cgrad(:Set1_4, length(loadpaths), categorical=true)
 
@@ -75,11 +76,16 @@ function _plot_multiple_corrs(loadpaths, gs, corrtype::String)
             xrange = collect(1:length(corrs))
 
             # Do fits
-            type, a, b, fit = compare_fits(xrange, abs.(corrs))
+            if fit_subset
+                a, b, fit, err = power_law_fit_subset(xrange, abs.(corrs))
+            else
+                a, b, fit, err = power_law_fit(xrange, abs.(corrs))
+            end
             p = plot!(p, log10.(xrange), log10.(abs.(corrs)), label="gB1=$(g)", c=cmap[i])
             p = scatter(p, log10.(xrange), log10.(abs.(corrs)), label=nothing, c=cmap[i])
-            p = plot!(p, log10.(xrange), log10.(fit), label="$type, k=$b", c=cmap[i])
-        catch
+            p = plot!(p, log10.(xrange), log10.(fit), label="k=$b", c=cmap[i])
+        catch e
+            @show e
             println("gB1=$(g) not yet available")
         end
     end
@@ -209,9 +215,50 @@ function power_law_fit(x, y)
     return a, b, fit_y, err
 end
 
-function compare_fits(x, y)
-    exp_a, exp_b, exp_fit, exp_err = exponential_fit(x, y)
-    power_a, power_b, power_fit, power_err = power_law_fit(x, y)
+# returns indices 
+function upper_quantile(x; q::Real=0.75)
+    start = floor(Int, length(x) / 2)
+    y = sort(copy(x[start:end]))
+    idx = floor(Int, length(y) * q)
+    idxs = findall(z -> z .> y[idx], x[start:end])
+    return idxs .+ (start - 1)
+end
+
+function localmaxima(x)
+    start = floor(Int, length(x) / 4)
+    y = x[start:end]
+    maxs = findlocalmaxima(y)
+    idxs = [idx[1] for idx in maxs]
+    return idxs .+ (start - 1)
+end
+
+function power_law_fit_subset(x, y)
+    # take just the last half of the points and fit to them 
+    idxs = localmaxima(y)
+    a, b = power_fit(x[idxs], y[idxs])
+    fit_y = a .* (x .^ b)
+    err = square_residual(fit_y, y)
+    return a, b, fit_y, err
+end
+
+function exponential_fit_subset(x, y)
+    # take just the last half of the points and fit to them 
+    idxs = localmaxima(y)
+    a, b = exp_fit(x[idxs], y[idxs])
+    fit_y = a .* exp.(b .* x)
+    err = square_residual(fit_y, y)
+    return a, b, fit_y, err
+end
+
+function compare_fits(x, y; fit_subset::Bool=false)
+    if fit_subset
+        exp_a, exp_b, exp_fit, exp_err = exponential_fit_subset(x, y)
+        power_a, power_b, power_fit, power_err = power_law_fit_subset(x, y)
+    else
+        exp_a, exp_b, exp_fit, exp_err = exponential_fit(x, y)
+        power_a, power_b, power_fit, power_err = power_law_fit(x, y)
+    end
+
     if power_err < exp_err
         return "power-law fit", power_a, power_b, power_fit
     else
