@@ -11,7 +11,7 @@ ITensors.set_warn_order(50)
 ## PARAMETERS ## 
 
 # Model 
-Nx = 48
+Nx = 40
 Ny = 2
 yperiodic = true
 
@@ -27,7 +27,7 @@ doping = 0.125
 ωA1 = 0
 ωB1 = 1
 gA1 = 0
-gB1 = 1
+gB1 = 1.49
 
 ## GLOBAL MODE CONSTANTS -- CAN'T THINK OF A GOOD WAY TO INCORPORATE THEM OTHERWISE!! ## 
 # Subtract 1 from this to get the maximum number of phonons allowed in that mode 
@@ -37,7 +37,7 @@ COPPER_DIM_3 = 1
 PX_DIM_1 = 1
 PX_DIM_2 = 1
 PX_DIM_3 = 1
-PY_DIM_1 = 3
+PY_DIM_1 = 5
 PY_DIM_2 = 1
 PY_DIM_3 = 1
 
