@@ -19,5 +19,9 @@ end
 
 n = 10
 s = 2000
+threaded(n, s)
+unthreaded(n, s)
+println("threaded:")
 @time threaded(n, s)
+println("unthreaded:")
 @time unthreaded(n, s)
