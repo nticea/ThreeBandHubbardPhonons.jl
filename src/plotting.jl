@@ -215,26 +215,22 @@ function power_law_fit(x, y)
     return a, b, fit_y, err
 end
 
-# returns indices 
-function upper_quantile(x; q::Real=0.75)
-    start = floor(Int, length(x) / 2)
-    y = sort(copy(x[start:end]))
-    idx = floor(Int, length(y) * q)
-    idxs = findall(z -> z .> y[idx], x[start:end])
-    return idxs .+ (start - 1)
-end
+function localmaxima(x, y)
+    # First, we will subtract away the average tilt of the points
+    a, b = power_fit(x, y)
+    fit_y = a .* (x .^ b)
+    y = y - fit_y
 
-function localmaxima(x)
-    start = floor(Int, length(x) / 4)
-    y = x[start:end]
-    maxs = findlocalmaxima(y)
+    start = floor(Int, length(y) / 4)
+    ỹ = y[start:end]
+    maxs = findlocalmaxima(ỹ)
     idxs = [idx[1] for idx in maxs]
     return idxs .+ (start - 1)
 end
 
 function power_law_fit_subset(x, y)
     # take just the last half of the points and fit to them 
-    idxs = localmaxima(y)
+    idxs = localmaxima(x, y)
     a, b = power_fit(x[idxs], y[idxs])
     fit_y = a .* (x .^ b)
     err = square_residual(fit_y, y)
