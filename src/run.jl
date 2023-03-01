@@ -103,8 +103,6 @@ function correlations_run(Nx, Ny, yperiodic,
     checkpoint_path=@__DIR__,
     results_path=@__DIR__)
 
-    println("Computing correlations...")
-
     param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Vpd)Vpd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ωB1)ωB1_$(ωA1)ωA1_$(gB1)gB1_$(gA1)gA1"
     save_path = joinpath(checkpoint_path, param_stamp * ".h5")
     results_save_path = joinpath(results_path, param_stamp * "_results.h5")
@@ -132,6 +130,7 @@ function correlations_run(Nx, Ny, yperiodic,
         global eq_corr = EquilibriumCorrelations(0, 0, [0], [0], [0], [0], [0], [0], [0], [0], [0])
         println("Computing equilibrium correlations")
     end
+    flush(stdout)
 
     start, stop, dSC_dxdx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dx-dx", "dx-dx", "dSC")
     global eq_corr.start = start
@@ -139,44 +138,53 @@ function correlations_run(Nx, Ny, yperiodic,
     global eq_corr.dSC_dxdx = dSC_dxdx
     save_structs(eq_corr, results_save_path)
     println("Saving dSC correlations for dx-dx bond...")
+    flush(stdout)
 
     _, _, spin_corr = compute_equilibrium_onsite_correlation(dmrg_results, HM, p, "dx-dx", "spin")
     global eq_corr.spin = spin_corr
     save_structs(eq_corr, results_save_path)
     println("Saving spin correlation...")
+    flush(stdout)
 
     _, _, charge_corr = compute_equilibrium_onsite_correlation(dmrg_results, HM, p, "dx-dx", "charge")
     global eq_corr.charge = charge_corr
     save_structs(eq_corr, results_save_path)
     println("Saving charge correlation...")
+    flush(stdout)
 
     _, _, particle_corr = compute_equilibrium_onsite_correlation(dmrg_results, HM, p, "dx-dx", "particle")
     global eq_corr.particle = particle_corr
     save_structs(eq_corr, results_save_path)
     println("Saving particle-particle correlation...")
+    flush(stdout)
 
     _, _, dSC_dpx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "d-px", "d-px", "dSC")
     global eq_corr.dSC_dpx = dSC_dpx
     save_structs(eq_corr, results_save_path)
     println("Saving dSC correlations for d-px bond...")
+    flush(stdout)
 
     _, _, dSC_pyd = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-d", "py-d", "dSC")
     global eq_corr.dSC_pyd = dSC_pyd
     save_structs(eq_corr, results_save_path)
     println("Saving dSC correlations for py-d bond...")
+    flush(stdout)
 
     _, _, dSC_pypx = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py-px", "py-px", "dSC")
     global eq_corr.dSC_pypx = dSC_pypx
     save_structs(eq_corr, results_save_path)
     println("Saving dSC correlations for py-px bond...")
+    flush(stdout)
 
     _, _, dSC_py1px2 = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py1-px2", "py1-px2", "dSC")
     global eq_corr.dSC_py1px2 = dSC_py1px2
     save_structs(eq_corr, results_save_path)
     println("Saving dSC correlations for py1-px2 bond...")
+    flush(stdout)
 
     _, _, dSC_dydy = compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dy-dy", "dy-dy", "dSC")
     global eq_corr.dSC_dydy = dSC_dydy
     save_structs(eq_corr, results_save_path)
     println("Saving dSC correlations for dy-dy bond...")
+    flush(stdout)
 end
