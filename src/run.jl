@@ -103,6 +103,8 @@ function correlations_run(Nx, Ny, yperiodic,
     checkpoint_path=@__DIR__,
     results_path=@__DIR__)
 
+    println("Computing correlations...")
+
     param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Vpd)Vpd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ωB1)ωB1_$(ωA1)ωA1_$(gB1)gB1_$(gA1)gA1"
     save_path = joinpath(checkpoint_path, param_stamp * ".h5")
     results_save_path = joinpath(results_path, param_stamp * "_results.h5")

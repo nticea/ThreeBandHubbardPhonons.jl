@@ -19,8 +19,8 @@ do_save = true
 
 ## PLOTTING ## 
 
-gs = [0, 1, 1.49, 1.5]
-loadpaths = [g0_loadpath, g1_loadpath, g149_loadpath, g15_loadpath]
+gs = [0, 1, 1.49]
+loadpaths = [g0_loadpath, g1_loadpath, g149_loadpath]
 
 plot_multiple_densities(loadpaths, gs)
 

@@ -81,9 +81,9 @@ function _plot_multiple_corrs(loadpaths, gs, corrtype::String; fit_subset::Bool=
             else
                 a, b, fit, err = power_law_fit(xrange, abs.(corrs))
             end
-            p = plot!(p, log10.(xrange), log10.(abs.(corrs)), label="gB1=$(g)", c=cmap[i])
-            p = scatter(p, log10.(xrange), log10.(abs.(corrs)), label=nothing, c=cmap[i])
-            p = plot!(p, log10.(xrange), log10.(fit), label="k=$b", c=cmap[i])
+            p = plot!(p, log10.(xrange), log10.(abs.(corrs)), label="gB1=$(g)", c=cmap[i], grid=false)
+            p = scatter(p, log10.(xrange), log10.(abs.(corrs)), label=nothing, c=cmap[i], grid=false)
+            p = plot!(p, log10.(xrange), log10.(fit), label="k=$b", c=cmap[i], grid=false)
         catch e
             @show e
             println("gB1=$(g) not yet available")
@@ -110,15 +110,15 @@ function plot_multiple_densities(loadpaths, gs)
 
             # electron density 
             n = dmrg_results.charge_density'
-            cd = plot(cd, 1:length(n[2:3:end, 1]), n[2:3:end, :], label="gB1=$(g)", c=cmap[i])
-            cpx = plot(cpx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="gB1=$(g)", c=cmap[i])
-            cpy = plot(cpy, 1:length(n[1:3:end, 1]), n[1:3:end, :], label="gB1=$(g)", c=cmap[i])
+            cd = plot(cd, 1:length(n[2:3:end, 1]), n[2:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
+            cpx = plot(cpx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
+            cpy = plot(cpy, 1:length(n[1:3:end, 1]), n[1:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
 
             # spin density 
             n = dmrg_results.spin_density'
-            spy = plot(spy, 1:length(n[1:3:end, 1]), n[1:3:end, :], label="gB1=$(g)", c=cmap[i])
-            sd = plot(sd, 1:length(n[2:3:end, 1]), n[2:3:end, :], label="gB1=$(g)", c=cmap[i])
-            spx = plot(spx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="gB1=$(g)", c=cmap[i])
+            spy = plot(spy, 1:length(n[1:3:end, 1]), n[1:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
+            sd = plot(sd, 1:length(n[2:3:end, 1]), n[2:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
+            spx = plot(spx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
 
             # phonon density 
             n = dmrg_results.phonon_density
