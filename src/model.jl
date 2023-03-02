@@ -89,12 +89,14 @@ mutable struct EquilibriumCorrelations
     spin
     charge
     particle
+    sSC
     dSC_dxdx
     dSC_dpx
     dSC_dydy
     dSC_pyd
     dSC_pypx
     dSC_py1px2
+    pSC_dxdx
 end
 
 struct TEBDResults
@@ -1196,64 +1198,73 @@ function onsite_correlation(ϕ::MPS, bonds, corrtype::String, sites)
 
     if corrtype == "spin"
         ψ = apply_onesite_operator(ϕ, "Sz", sites, j)
-        function compute_corr_spin(i::Int)
-            Szψ = apply_onesite_operator(ψ, "Sz", sites, i)
-            return inner(ϕ, Szψ)
+        corrs = zeros(length(indices))
+        Threads.@threads for i in 1:length(indices)
+            Szψ = apply_onesite_operator(ψ, "Sz", sites, indices[i])
+            corrs[i] = inner(ϕ, Szψ)
         end
-        return compute_corr_spin.(indices)
+        return corrs
+
     elseif corrtype == "charge"
         ψ = apply_onesite_operator(ϕ, "Ntot", sites, j)
-        function compute_corr_charge(i::Int)
-            Ntotψ = apply_onesite_operator(ψ, "Ntot", sites, i)
-            return inner(ϕ, Ntotψ)
+        ninj = zeros(length(indices))
+        Threads.@threads for i in 1:length(indices)
+            Ntotψ = apply_onesite_operator(ψ, "Ntot", sites, indices[i])
+            ninj[i] = inner(ϕ, Ntotψ)
         end
-        ninj = compute_corr_charge.(indices)
         ni = expect(ϕ, "Ntot")
         nj = ni[j]
         return ninj - nj .* (ni[indices])
+
     elseif corrtype == "particle"
         ψ = apply_onesite_operator(ϕ, "Cup", sites, j)
-        function compute_corr_particle(i::Int)
-            cψ = apply_onesite_operator(ψ, "Cdagup", sites, i)
-            return inner(ϕ, cψ)
+        corrs = zeros(length(indices))
+        Threads.@threads for i in 1:length(indices)
+            cψ = apply_onesite_operator(ψ, "Cup", sites, indices[i])
+            corrs[i] = inner(ϕ, cψ)
         end
-        return compute_corr_particle.(indices)
+        return corrs
+
     elseif corrtype == "sSC"
         ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
-        function compute_corr_sSC(i::Int)
-            Σ_iϕ = apply_onesite_operator(ϕ, "Cupdn", sites, i)
-            return inner(ψ, Σ_iϕ)
+        corrs = zeros(length(indices))
+        Threads.@threads for i in 1:length(indices)
+            Σ_iϕ = apply_onesite_operator(ϕ, "Cupdn", sites, indices[i])
+            corrs[i] = inner(ψ, Σ_iϕ)
         end
-        return compute_corr_sSC.(indices)
+        return corrs
     end
+
     @error "Unknown correlation type"
 end
 
 function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)
     if corrtype == "sSC"
-        indices = unzip(bonds) # we don't actually care about bonds, bc it's all on single sites
-        ψ = apply_onesite_operator(ϕ, "Cupdn", sites, indices[1])
-        function compute_corr_sSC(i::Int)
-            Σ_iϕ = apply_onesite_operator(ϕ, "Cupdn", sites, i)
-            return inner(ψ, Σ_iϕ)
+        ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
+        corrs = zeros(length(indices))
+        Threads.@threads for i in 1:length(indices)
+            Σ_iϕ = apply_onesite_operator(ϕ, "Cupdn", sites, indices[i])
+            corrs[i] = inner(ψ, Σ_iϕ)
         end
-        return compute_corr_sSC.(indices)
+        return corrs
 
     elseif corrtype == "pSC"
         ψ = apply_twosite_operator(ϕ, "pSC", sites, refbond[1], refbond[2])
-        function compute_corr_pSC(bond)
-            Π_iϕ = apply_twosite_operator(ϕ, "pSC", sites, bond[1], bond[2])
-            return inner(ψ, Π_iϕ)
+        corrs = zeros(length(bonds))
+        Threads.@threads for i in 1:length(bonds)
+            Π_iϕ = apply_twosite_operator(ϕ, "pSC", sites, bonds[i][1], bonds[i][2])
+            corrs[i] = inner(ψ, Π_iϕ)
         end
-        return compute_corr_pSC.(bonds)
+        return corrs
 
     elseif corrtype == "dSC"
         ψ = apply_twosite_operator(ϕ, "dSC", sites, refbond[1], refbond[2])
-        function compute_corr_dSC(bond)
-            Δ_iϕ = apply_twosite_operator(ϕ, "dSC", sites, bond[1], bond[2])
-            return inner(ψ, Δ_iϕ)
+        corrs = zeros(length(bonds))
+        Threads.@threads for i in 1:length(bonds)
+            Δ_iϕ = apply_twosite_operator(ϕ, "dSC", sites, bonds[i][1], bonds[i][2])
+            corrs[i] = inner(ψ, Δ_iϕ)
         end
-        return compute_corr_dSC.(bonds)
+        return corrs
     end
     @error "Unknown correlation type"
 end

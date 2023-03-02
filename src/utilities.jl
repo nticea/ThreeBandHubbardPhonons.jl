@@ -60,28 +60,34 @@ function load_equilibrium_correlations(loadpath::String)
     f = h5open(loadpath, "r")
     d = read(f)
     particle = [0]
+    sSC = []
     try
         particle = d["particle"]
     catch
     end
-    return EquilibriumCorrelations(d["start"], d["stop"], d["spin"], d["charge"], particle,
+    try
+        sSC = d["sSC"]
+        pSC = d["pSC_dxdx"]
+    catch
+    end
+    return EquilibriumCorrelations(d["start"], d["stop"], d["spin"], d["charge"], particle, sSC,
         d["dSC_dxdx"], d["dSC_dpx"], d["dSC_dydy"],
-        d["dSC_pyd"], d["dSC_pypx"], d["dSC_py1px2"])
+        d["dSC_pyd"], d["dSC_pypx"], d["dSC_py1px2"], pSC)
 end
 
-function load_results(loadpath::String)
-    f = h5open(loadpath, "r")
-    d = read(f)
-    @show keys(d)
-    dmrg_results = DMRGResultsMinimal(d["ground_state_energy"],
-        d["ground_state_entropy"], d["charge_density"],
-        d["phonon_density"], d["spin_density"])
+# function load_results(loadpath::String)
+#     f = h5open(loadpath, "r")
+#     d = read(f)
+#     @show keys(d)
+#     dmrg_results = DMRGResultsMinimal(d["ground_state_energy"],
+#         d["ground_state_entropy"], d["charge_density"],
+#         d["phonon_density"], d["spin_density"])
 
-    eq_corr = EquilibriumCorrelations(d["start"], d["stop"], d["spin"], d["charge"],
-        d["dSC_dxdx"], d["dSC_dpx"], d["dSC_dydy"],
-        d["dSC_pyd"], d["dSC_pypx"], d["dSC_py1px2"])
-    return dmrg_results, eq_corr
-end
+#     eq_corr = EquilibriumCorrelations(d["start"], d["stop"], d["spin"], d["charge"],
+#         d["dSC_dxdx"], d["dSC_dpx"], d["dSC_dydy"],
+#         d["dSC_pyd"], d["dSC_pypx"], d["dSC_py1px2"])
+#     return dmrg_results, eq_corr
+# end
 
 function load_dmrg_results_minimal(loadpath::String)
     f = h5open(loadpath, "r")
