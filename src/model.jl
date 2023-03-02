@@ -1195,6 +1195,7 @@ function compute_equilibrium_pairfield_correlation(dmrg_results::DMRGResults,
 end
 
 function compute_equilibrium_pairfield_correlation_checkpoint(eq_corr::EquilibriumCorrelations,
+    dmrg_results::DMRGResults,
     HM::ThreeBandModel, p::Parameters,
     corrname::String,
     bond1::String, bond2::String, SCtype::String,
@@ -1223,6 +1224,7 @@ function compute_equilibrium_pairfield_correlation_checkpoint(eq_corr::Equilibri
 end
 
 function compute_equilibrium_onsite_correlation_checkpoint(eq_corr::EquilibriumCorrelations,
+    dmrg_results::DMRGResults,
     HM::ThreeBandModel, p::Parameters,
     corrname::String,
     bondtype, corrtype::String,
@@ -1319,6 +1321,7 @@ function onsite_correlation_checkpoint(ϕ::MPS, bonds, corrtype::String, sites,
         ψ = apply_onesite_operator(ϕ, "Sz", sites, j)
         corrs = getfield(eq_corr, Symbol(corrname))
         for i in 1:length(indices)
+            print(i, "-")
             Szψ = apply_onesite_operator(ψ, "Sz", sites, indices[i])
             push!(corrs, inner(ϕ, Szψ))
             setproperty!(eq_corr, Symbol(corrname), corrs)
@@ -1331,6 +1334,7 @@ function onsite_correlation_checkpoint(ϕ::MPS, bonds, corrtype::String, sites,
         ni = expect(ϕ, "Ntot")
         nj = ni[j]
         for i in 1:length(indices)
+            print(i, "-")
             Ntotψ = apply_onesite_operator(ψ, "Ntot", sites, indices[i])
             ninj = inner(ϕ, Ntotψ)
             push!(corrs, ninj - nj * ni[indices[i]])
@@ -1342,6 +1346,7 @@ function onsite_correlation_checkpoint(ϕ::MPS, bonds, corrtype::String, sites,
         ψ = apply_onesite_operator(ϕ, "Cup", sites, j)
         corrs = getfield(eq_corr, Symbol(corrname))
         for i in 1:length(indices)
+            print(i, "-")
             cψ = apply_onesite_operator(ψ, "Cup", sites, indices[i])
             push!(corrs, inner(ϕ, cψ))
             setproperty!(eq_corr, Symbol(corrname), corrs)
@@ -1352,6 +1357,7 @@ function onsite_correlation_checkpoint(ϕ::MPS, bonds, corrtype::String, sites,
         ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
         corrs = getfield(eq_corr, Symbol(corrname))
         for i in 1:length(indices)
+            print(i, "-")
             Σ_iϕ = apply_onesite_operator(ϕ, "Cupdn", sites, indices[i])
             push!(corrs, inner(ψ, Σ_iϕ))
             setproperty!(eq_corr, Symbol(corrname), corrs)
@@ -1366,20 +1372,11 @@ end
 function bond_correlation_checkpoint(ϕ::MPS, refbond, bonds, corrtype::String, sites,
     eq_corr::EquilibriumCorrelations, corrname::String, checkpoint_path::String)
 
-    if corrtype == "sSC"
-        ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
-        corrs = getfield(eq_corr, Symbol(corrname))
-        for i in 1:length(indices)
-            Σ_iϕ = apply_onesite_operator(ϕ, "Cupdn", sites, indices[i])
-            push!(corrs, inner(ψ, Σ_iϕ))
-            setproperty!(eq_corr, Symbol(corrname), corrs)
-            save_structs(eq_corr, checkpoint_path)
-        end
-
-    elseif corrtype == "pSC"
+    if corrtype == "pSC"
         ψ = apply_twosite_operator(ϕ, "pSC", sites, refbond[1], refbond[2])
         corrs = getfield(eq_corr, Symbol(corrname))
         for i in 1:length(bonds)
+            print(i, "-")
             Π_iϕ = apply_twosite_operator(ϕ, "pSC", sites, bonds[i][1], bonds[i][2])
             push!(corrs, inner(ψ, Π_iϕ))
             setproperty!(eq_corr, Symbol(corrname), corrs)
@@ -1390,6 +1387,7 @@ function bond_correlation_checkpoint(ϕ::MPS, refbond, bonds, corrtype::String, 
         ψ = apply_twosite_operator(ϕ, "dSC", sites, refbond[1], refbond[2])
         corrs = getfield(eq_corr, Symbol(corrname))
         for i in 1:length(bonds)
+            print(i, "-")
             Δ_iϕ = apply_twosite_operator(ϕ, "dSC", sites, bonds[i][1], bonds[i][2])
             push!(corrs, inner(ψ, Δ_iϕ))
             setproperty!(eq_corr, Symbol(corrname), corrs)
