@@ -188,15 +188,104 @@ function correlations_run(Nx, Ny, yperiodic,
     println("Saving dSC correlations for py-px bond...")
     flush(stdout)
 
-    _, _, dSC_py1px2 = @time compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py1-px2", "py1-px2", "dSC")
-    global eq_corr.dSC_py1px2 = dSC_py1px2
-    save_structs(eq_corr, results_save_path)
-    println("Saving dSC correlations for py1-px2 bond...")
+    if p.Ny > 1
+        _, _, dSC_py1px2 = @time compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "py1-px2", "py1-px2", "dSC")
+        global eq_corr.dSC_py1px2 = dSC_py1px2
+        save_structs(eq_corr, results_save_path)
+        println("Saving dSC correlations for py1-px2 bond...")
+        flush(stdout)
+
+        _, _, dSC_dydy = @time compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dy-dy", "dy-dy", "dSC")
+        global eq_corr.dSC_dydy = dSC_dydy
+        save_structs(eq_corr, results_save_path)
+        println("Saving dSC correlations for dy-dy bond...")
+        flush(stdout)
+    end
+end
+
+function correlations_run_checkpoint(Nx, Ny, yperiodic,
+    μ, εd, εp, tpd, tpp, Vpd, Upp, Udd,
+    ωB1, ωA1, gB1, gA1,
+    doping;
+    corr_name::Union{String,Nothing}=nothing,
+    checkpoint_path=@__DIR__,
+    results_path=@__DIR__)
+
+    param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Vpd)Vpd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ωB1)ωB1_$(ωA1)ωA1_$(gB1)gB1_$(gA1)gA1"
+    save_path = joinpath(checkpoint_path, param_stamp * ".h5")
+    results_save_path = joinpath(results_path, param_stamp * "_correlation_results.h5")
+
+    ## CODE ## 
+    global eq_corr
+
+    # Load in the parameters 
+    p = load_params(save_path)
+    println("Loading parameters from ", save_path)
+
+    # Load the DMRG results         
+    println("Loading DMRG results")
+    dmrg_results = load_dmrg_results(save_path)
+
+    # Load the model  
+    HM = ThreeBandModel(p, dmrg_results) # load in the correct sites if we already have a wavefcn
+
+    # Load in whatever results we have 
+    try
+        global eq_corr = load_equilibrium_correlations(results_save_path)
+        println("Loading equilibrium correlations")
+    catch e
+        @show e
+        start, stop = equilibrium_start_stop(dmrg_results, p)
+        global eq_corr = EquilibriumCorrelations(start, stop, Float64[], Float64[], Float64[], Float64[], Float64[], Float64[], Float64[], Float64[], Float64[], Float64[], Float64[])
+        println("Computing equilibrium correlations")
+    end
     flush(stdout)
 
-    _, _, dSC_dydy = @time compute_equilibrium_pairfield_correlation(dmrg_results, HM, p, "dy-dy", "dy-dy", "dSC")
-    global eq_corr.dSC_dydy = dSC_dydy
-    save_structs(eq_corr, results_save_path)
-    println("Saving dSC correlations for dy-dy bond...")
+    compute_equilibrium_pairfield_correlation_checkpoint(eq_corr, HM, p, "dSC_dxdx", "dx-dx", "dx-dx", "dSC", results_save_path)
+    println("Completed dSC_dxdx correlation...")
     flush(stdout)
+
+    compute_equilibrium_onsite_correlation_checkpoint(eq_corr, HM, p, "spin", "dx-dx", "spin", results_save_path)
+    println("Completed spin correlation...")
+    flush(stdout)
+
+    compute_equilibrium_onsite_correlation_checkpoint(eq_corr, HM, p, "charge", "dx-dx", "charge", results_save_path)
+    println("Completed charge correlation...")
+    flush(stdout)
+
+    compute_equilibrium_onsite_correlation_checkpoint(eq_corr, HM, p, "particle", "dx-dx", "particle", results_save_path)
+    println("Completed particle correlation...")
+    flush(stdout)
+
+    compute_equilibrium_onsite_correlation_checkpoint(eq_corr, HM, p, "sSC", "dx-dx", "sSC", results_save_path)
+    println("Completed sSC correlation...")
+    flush(stdout)
+
+    compute_equilibrium_pairfield_correlation_checkpoint(eq_corr, HM, p, "pSC_dxdx", "dx-dx", "dx-dx", "pSC", results_save_path)
+    println("Completed pSC_dxdx correlation...")
+    flush(stdout)
+
+    compute_equilibrium_pairfield_correlation_checkpoint(eq_corr, HM, p, "dSC_dpx", "d-px", "d-px", "dSC", results_save_path)
+    println("Completed dSC_dpx correlation...")
+    flush(stdout)
+
+    compute_equilibrium_pairfield_correlation_checkpoint(eq_corr, HM, p, "dSC_pyd", "py-d", "py-d", "dSC", results_save_path)
+    println("Completed dSC_pyd correlation...")
+    flush(stdout)
+
+    compute_equilibrium_pairfield_correlation_checkpoint(eq_corr, HM, p, "dSC_pypx", "py-px", "py-px", "dSC", results_save_path)
+    println("Completed dSC_pypx correlation...")
+    flush(stdout)
+
+    if p.Ny > 1
+        compute_equilibrium_pairfield_correlation_checkpoint(eq_corr, HM, p, "dSC_py1px2", "py1-px2", "py1-px2", "dSC", results_save_path)
+        println("Completed dSC_py1px2 correlation...")
+        flush(stdout)
+
+        compute_equilibrium_pairfield_correlation_checkpoint(eq_corr, HM, p, "dSC_dydy", "dy-dy", "dy-dy", "dSC", results_save_path)
+        println("Completed dSC_dydy correlation...")
+        flush(stdout)
+    end
+
+
 end

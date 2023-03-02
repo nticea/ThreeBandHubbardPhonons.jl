@@ -1129,6 +1129,18 @@ function get_bonds(bondtype::String, lattice_indices; row=1)
     return refbond, bonds
 end
 
+function equilibrium_start_stop(dmrg_results::DMRGResults, p::Parameters, buffer=nothing)
+    Nx, Ny = p.Nx, p.Ny
+    if isnothing(buffer)
+        buffer = floor(Int, Nx / 4)
+    end
+    ϕ = copy(dmrg_results.ground_state)
+    Nsites = length(ϕ)
+    start = 4 + (buffer - 1) * 3 # discard buffer # of unit cells 
+    stop = 3 * Nx - (buffer - 1) * 3 - 2 # discard the last rung and buffer # of unit cells
+    return start, stop
+end
+
 function compute_equilibrium_onsite_correlation(dmrg_results::DMRGResults,
     HM::ThreeBandModel, p::Parameters,
     bondtype::String, corrtype::String;
@@ -1180,6 +1192,61 @@ function compute_equilibrium_pairfield_correlation(dmrg_results::DMRGResults,
     corr = bond_correlation(ϕ, refbond, bonds, SCtype, HM.sites)
 
     return start, stop, corr
+end
+
+function compute_equilibrium_pairfield_correlation_checkpoint(eq_corr::EquilibriumCorrelations,
+    HM::ThreeBandModel, p::Parameters,
+    corrname::String,
+    bond1::String, bond2::String, SCtype::String,
+    checkpoint_path::String;
+    row=1)
+
+    Nx, Ny = p.Nx, p.Ny
+    ϕ = copy(dmrg_results.ground_state)
+    Nsites = length(ϕ)
+    start = eq_corr.start
+    stop = eq_corr.stop
+
+    # Compute the correlations for each row separately 
+    lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
+    lattice_indices = convert.(Int, lattice_indices)
+    lattice_indices = lattice_indices[:, start:stop]
+
+    # Compute the equilibrium correlations within this chain 
+    refbond, _ = get_bonds(bond1, lattice_indices, row=row)
+    _, bonds = get_bonds(bond2, lattice_indices, row=row)
+
+    # Compute the first nonzero site onwards 
+    corrs = getfield(eq_corr, Symbol(corrname))
+    startidx = length(corrs) + 1
+    bond_correlation_checkpoint(ϕ, refbond, bonds[startidx:end], SCtype, HM.sites, eq_corr, corrname, checkpoint_path)
+end
+
+function compute_equilibrium_onsite_correlation_checkpoint(eq_corr::EquilibriumCorrelations,
+    HM::ThreeBandModel, p::Parameters,
+    corrname::String,
+    bondtype, corrtype::String,
+    checkpoint_path::String;
+    row=1)
+
+    Nx, Ny = p.Nx, p.Ny
+    ϕ = copy(dmrg_results.ground_state)
+    Nsites = length(ϕ)
+    start = eq_corr.start
+    stop = eq_corr.stop
+
+    # Compute the correlations for each row separately 
+    lattice_indices = reshape_into_lattice(collect(1:Nsites), Nx, Ny)
+    lattice_indices = convert.(Int, lattice_indices)
+    lattice_indices = lattice_indices[:, start:stop]
+
+    # Compute the equilibrium correlations within this chain 
+    _, bonds = get_bonds(bondtype, lattice_indices, row=row)
+
+    # Compute the first nonzero site onwards 
+    corrs = getfield(eq_corr, Symbol(corrname))
+    startidx = length(corrs) + 1
+    onsite_correlation_checkpoint(ϕ, bonds[startidx:end], corrtype, HM.sites, eq_corr, corrname, checkpoint_path)
 end
 
 function unzip(bonds)
@@ -1236,6 +1303,102 @@ function onsite_correlation(ϕ::MPS, bonds, corrtype::String, sites)
     end
 
     @error "Unknown correlation type"
+end
+
+function onsite_correlation_checkpoint(ϕ::MPS, bonds, corrtype::String, sites,
+    eq_corr::EquilibriumCorrelations, corrname::String, checkpoint_path::String)
+
+    ϕ = copy(ϕ)
+    indices = unzip(bonds) # we don't actually care about bonds, bc it's all on single sites
+    if length(indices) == 0
+        return
+    end
+    j = indices[1]
+
+    if corrtype == "spin"
+        ψ = apply_onesite_operator(ϕ, "Sz", sites, j)
+        corrs = getfield(eq_corr, Symbol(corrname))
+        for i in 1:length(indices)
+            Szψ = apply_onesite_operator(ψ, "Sz", sites, indices[i])
+            push!(corrs, inner(ϕ, Szψ))
+            setproperty!(eq_corr, Symbol(corrname), corrs)
+            save_structs(eq_corr, checkpoint_path)
+        end
+
+    elseif corrtype == "charge"
+        ψ = apply_onesite_operator(ϕ, "Ntot", sites, j)
+        corrs = getfield(eq_corr, Symbol(corrname))
+        ni = expect(ϕ, "Ntot")
+        nj = ni[j]
+        for i in 1:length(indices)
+            Ntotψ = apply_onesite_operator(ψ, "Ntot", sites, indices[i])
+            ninj = inner(ϕ, Ntotψ)
+            push!(corrs, ninj - nj * ni[indices[i]])
+            setproperty!(eq_corr, Symbol(corrname), corrs)
+            save_structs(eq_corr, checkpoint_path)
+        end
+
+    elseif corrtype == "particle"
+        ψ = apply_onesite_operator(ϕ, "Cup", sites, j)
+        corrs = getfield(eq_corr, Symbol(corrname))
+        for i in 1:length(indices)
+            cψ = apply_onesite_operator(ψ, "Cup", sites, indices[i])
+            push!(corrs, inner(ϕ, cψ))
+            setproperty!(eq_corr, Symbol(corrname), corrs)
+            save_structs(eq_corr, checkpoint_path)
+        end
+
+    elseif corrtype == "sSC"
+        ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
+        corrs = getfield(eq_corr, Symbol(corrname))
+        for i in 1:length(indices)
+            Σ_iϕ = apply_onesite_operator(ϕ, "Cupdn", sites, indices[i])
+            push!(corrs, inner(ψ, Σ_iϕ))
+            setproperty!(eq_corr, Symbol(corrname), corrs)
+            save_structs(eq_corr, checkpoint_path)
+        end
+
+    else
+        @error "Unknown correlation type"
+    end
+end
+
+function bond_correlation_checkpoint(ϕ::MPS, refbond, bonds, corrtype::String, sites,
+    eq_corr::EquilibriumCorrelations, corrname::String, checkpoint_path::String)
+
+    if corrtype == "sSC"
+        ψ = apply_onesite_operator(ϕ, "Cupdn", sites, j)
+        corrs = getfield(eq_corr, Symbol(corrname))
+        for i in 1:length(indices)
+            Σ_iϕ = apply_onesite_operator(ϕ, "Cupdn", sites, indices[i])
+            push!(corrs, inner(ψ, Σ_iϕ))
+            setproperty!(eq_corr, Symbol(corrname), corrs)
+            save_structs(eq_corr, checkpoint_path)
+        end
+
+    elseif corrtype == "pSC"
+        ψ = apply_twosite_operator(ϕ, "pSC", sites, refbond[1], refbond[2])
+        corrs = getfield(eq_corr, Symbol(corrname))
+        for i in 1:length(bonds)
+            Π_iϕ = apply_twosite_operator(ϕ, "pSC", sites, bonds[i][1], bonds[i][2])
+            push!(corrs, inner(ψ, Π_iϕ))
+            setproperty!(eq_corr, Symbol(corrname), corrs)
+            save_structs(eq_corr, checkpoint_path)
+        end
+
+    elseif corrtype == "dSC"
+        ψ = apply_twosite_operator(ϕ, "dSC", sites, refbond[1], refbond[2])
+        corrs = getfield(eq_corr, Symbol(corrname))
+        for i in 1:length(bonds)
+            Δ_iϕ = apply_twosite_operator(ϕ, "dSC", sites, bonds[i][1], bonds[i][2])
+            push!(corrs, inner(ψ, Δ_iϕ))
+            setproperty!(eq_corr, Symbol(corrname), corrs)
+            save_structs(eq_corr, checkpoint_path)
+        end
+    else
+        @error "Unknown correlation type $(corrtype)"
+    end
+
 end
 
 function bond_correlation(ϕ::MPS, refbond, bonds, corrtype::String, sites)

@@ -59,8 +59,9 @@ end
 function load_equilibrium_correlations(loadpath::String)
     f = h5open(loadpath, "r")
     d = read(f)
-    particle = [0]
-    sSC = []
+    particle = Int64[]
+    sSC = Int64[]
+    pSC = Int64[]
     try
         particle = d["particle"]
     catch

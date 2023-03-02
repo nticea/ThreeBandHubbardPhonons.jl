@@ -43,6 +43,6 @@ PY_DIM_3 = 1
 
 
 println("Computing correlations...")
-correlations_run(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd,
+correlations_run_checkpoint(Nx, Ny, yperiodic, μ, εd, εp, tpd, tpp, Vpd, Upp, Udd,
         ωB1, ωA1, gB1, gA1, doping; checkpoint_path="/scratch/users/nticea",
         results_path=@__DIR__)
