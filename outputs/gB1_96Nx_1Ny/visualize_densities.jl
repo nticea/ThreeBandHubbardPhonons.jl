@@ -21,7 +21,8 @@ do_save = true
 gs = [0, 1, 1.49]
 loadpaths = [g0_loadpath, g1_loadpath, g149_loadpath]
 
-plot_multiple_densities(loadpaths, gs)
+p = plot_multiple_densities(loadpaths, gs)
+savefig(p, "densities_96x1.pdf")
 
 
 

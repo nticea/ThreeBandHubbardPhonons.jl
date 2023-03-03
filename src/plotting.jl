@@ -81,9 +81,9 @@ function _plot_multiple_corrs(loadpaths, gs, corrtype::String; fit_subset::Bool=
             else
                 a, b, fit, err = power_law_fit(xrange, abs.(corrs))
             end
-            p = plot!(p, log10.(xrange), log10.(abs.(corrs)), label="gB1=$(g)", c=cmap[i], grid=false)
-            p = scatter(p, log10.(xrange), log10.(abs.(corrs)), label=nothing, c=cmap[i], grid=false)
-            p = plot!(p, log10.(xrange), log10.(fit), label="k=$b", c=cmap[i], grid=false)
+            p = plot!(p, log10.(xrange), log10.(abs.(corrs)), label=nothing, c=cmap[i], grid=false)
+            p = scatter(p, log10.(xrange), log10.(abs.(corrs)), label=nothing, c=cmap[i], grid=false, ms=1)
+            p = plot!(p, log10.(xrange), log10.(fit), label="k=$(round(b,sigdigits=4))", c=cmap[i], grid=false)
         catch e
             @show e
             println("gB1=$(g) not yet available")
@@ -102,7 +102,7 @@ function plot_multiple_densities(loadpaths, gs)
     sd = plot(title="Spin density d")
     spx = plot(title="Spin density px")
     spy = plot(title="Spin density py")
-    ph = plot(title="Phonon density", xlabel="Site")
+    ph = plot(title="Phonon density", xlabel="Site", ylabel="Density")
 
     for (i, (g, loadpath)) in enumerate(zip(gs, loadpaths))
         try
@@ -110,15 +110,21 @@ function plot_multiple_densities(loadpaths, gs)
 
             # electron density 
             n = dmrg_results.charge_density'
-            cd = plot(cd, 1:length(n[2:3:end, 1]), n[2:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
-            cpx = plot(cpx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
-            cpy = plot(cpy, 1:length(n[1:3:end, 1]), n[1:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
+            cd = plot(cd, 1:length(n[2:3:end, 1]), n[2:3:end, :], label=nothing, c=cmap[i], grid=false, alpha=0.8)
+            cpx = plot(cpx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label=nothing, c=cmap[i], grid=false, alpha=0.8)
+            cpy = plot(cpy, 1:length(n[1:3:end, 1]), n[1:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false, alpha=0.8)
+            cd = scatter!(cd, 1:length(n[2:3:end, 1]), n[2:3:end, :], c=cmap[i], label=false, grid=false, ms=0.5)
+            cpx = scatter!(cpx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], c=cmap[i], label=false, grid=false, ms=0.5)
+            cpy = scatter!(cpy, 1:length(n[1:3:end, 1]), n[1:3:end, :], c=cmap[i], label=false, grid=false, ms=0.5)
 
             # spin density 
             n = dmrg_results.spin_density'
-            spy = plot(spy, 1:length(n[1:3:end, 1]), n[1:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
-            sd = plot(sd, 1:length(n[2:3:end, 1]), n[2:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
-            spx = plot(spx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label="gB1=$(g)", c=cmap[i], grid=false)
+            spy = plot(spy, 1:length(n[1:3:end, 1]), n[1:3:end, :], label=nothing, c=cmap[i], grid=false, alpha=0.8)
+            sd = plot(sd, 1:length(n[2:3:end, 1]), n[2:3:end, :], label=nothing, c=cmap[i], grid=false, alpha=0.8)
+            spx = plot(spx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], label=nothing, c=cmap[i], grid=false, alpha=0.8)
+            spy = scatter!(spy, 1:length(n[1:3:end, 1]), n[1:3:end, :], c=cmap[i], label=false, grid=false, ms=0.5)
+            sd = scatter!(sd, 1:length(n[2:3:end, 1]), n[2:3:end, :], c=cmap[i], label=false, grid=false, ms=0.5)
+            spx = scatter!(spx, 1.5:length(n[3:3:end, 1])+1, n[3:3:end, :], c=cmap[i], label=false, grid=false, ms=0.5)
 
             # phonon density 
             n = dmrg_results.phonon_density
@@ -132,7 +138,8 @@ function plot_multiple_densities(loadpaths, gs)
                 end
             end
             n = sum(toplot', dims=2)
-            ph = plot(ph, 1:length(n[1:3:end]), n[1:3:end], label="gB1=$(g)", c=cmap[i])
+            ph = plot(ph, 1:length(n[1:3:end]), n[1:3:end], label=nothing, grid=false, c=cmap[i], alpha=0.8)
+            ph = scatter!(ph, 1:length(n[1:3:end]), n[1:3:end], label=nothing, grid=false, c=cmap[i], ms=0.5)
 
         catch e
             @show e

@@ -43,7 +43,7 @@ PY_DIM_3 = 1
 
 # DMRG parameters 
 DMRG_numsweeps = 80 # total number of iterations 
-DMRG_numsweeps_per_save = 3 # If don't want to save regularly, just set this to DMRG_numsweeps
+DMRG_numsweeps_per_save = 1 # If don't want to save regularly, just set this to DMRG_numsweeps
 DMRG_maxdim = [50, 50, 50, 50, 50,
         100, 100, 100, 100, 100,
         200, 200, 200, 200, 200,
