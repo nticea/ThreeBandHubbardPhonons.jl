@@ -796,11 +796,11 @@ function _run_DMRG(HM::ThreeBandModel, p::Parameters, ϕ0::MPS, sweeps, nsweep, 
     end
 
     # Entropy 
-    entropy = compute_entropy(ϕ, ceil(Int, p.Nsites / 2))
+    @time entropy = compute_entropy(ϕ, ceil(Int, p.Nsites / 2))
 
     # Electron site densities
-    charge_density = ladder_expectation(ϕ, "Ntot", p)
-    spin_density = ladder_expectation(ϕ, "Sz", p)
+    @time charge_density = ladder_expectation(ϕ, "Ntot", p)
+    @time spin_density = ladder_expectation(ϕ, "Sz", p)
 
     # Phonon site densities 
     phonon_density = zeros(size(spin_density)..., 9)
@@ -826,7 +826,7 @@ function _run_DMRG(HM::ThreeBandModel, p::Parameters, ϕ0::MPS, sweeps, nsweep, 
     end
     # Oxygen y
     if p.dim_oxygen_y_mode_1 > 1
-        phonon_density[:, :, 7] += ladder_expectation(ϕ, "Nb1", p, st="oxygen_y")
+        @time phonon_density[:, :, 7] += ladder_expectation(ϕ, "Nb1", p, st="oxygen_y")
     end
     if p.dim_oxygen_y_mode_2 > 1
         phonon_density[:, :, 8] += ladder_expectation(ϕ, "Nb2", p, st="oxygen_y")
