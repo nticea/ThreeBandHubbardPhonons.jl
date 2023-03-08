@@ -1,5 +1,6 @@
 using ITensors
 using Statistics: mean
+using LsqFit
 include("lattices/cuprate_lattice.jl")
 #include("sites/site_hubbholst.jl")
 include("sites/threeband/copper.jl")
@@ -654,9 +655,74 @@ function compute_overlap(ψ1::MPS, ψ2::MPS)
     LinearAlgebra.norm(inner(ψ1, ψ2))
 end
 
-# function compute_phonon_number(ψ::MPS)
-#     expect(ψ,"Nb")
-# end
+
+function has_nonzero_elements(a)
+    nonzero_inds = findall(x -> x > 0, a)
+    return length(nonzero_inds) > 0
+end
+
+function phonon_density(dmrg_results::Union{DMRGResultsMinimal,DMRGResults})
+    # phonon density 
+    n = dmrg_results.phonon_density
+    nmodes = size(n)[3]
+    # find the modes with a nonzero number of phonons 
+    toplot = zeros(size(n)[1:2])
+    for m in 1:nmodes
+        mode = n[:, :, m]
+        if has_nonzero_elements(mode)
+            toplot += mode
+        end
+    end
+    n = sum(toplot', dims=2)
+end
+
+# USE JUST LEFT OR RIGHT HALF OF THE SYSTEM!!
+function density_modulation(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}, eq_corrs::EquilibriumCorrelations, orbital::String)
+    # extract the charge luttinger parameter 
+    corrs = eq_corrs.charge
+    @assert length(corrs) > 1
+    xrange = collect(1:length(corrs))
+    _, Kc, _, _ = power_law_fit_subset(xrange, abs.(corrs))
+
+    #extract the charge density 
+    n = dmrg_results.charge_density'
+    if orbital == "d"
+        c = n[2:3:end]
+    elseif orbital == "px"
+        c = n[3:3:end]
+    elseif orbital == "py"
+        c = n[1:3:end]
+    elseif orbital == "phonons"
+        n = phonon_density(dmrg_results)
+        c = n[1:3:end]
+    else
+        @error "Orbital type not recognized"
+        return
+    end
+
+    L = length(c)
+    mid = floor(Int, L / 2)
+    right = ceil(Int, 5 * L / 6)
+    c = c[mid:right] # take just the right half, discard the last 1/6 of sites
+
+    # fit the charge density to the 2 oscillating exponentials 
+    function double_oscillation_fit(x, p)
+        n0, A1, A2, Q1, Q2, ϕ1, ϕ2 = p
+        n0 .+ A1 .* cos.(Q1 .* x .+ ϕ1) .* x .^ (-Kc / 2) .+ A2 .* cos.(Q2 .* x .+ ϕ2) .* x .^ (-Kc / 2)
+    end
+
+    p0 = [0.5, 0.05, 0.05, 8, 8, 0, 0]
+    x = collect(1:length(c))
+    fit = LsqFit.curve_fit(double_oscillation_fit, x, c, p0)
+
+    # plot the reconstructed fit 
+    ĉ = double_oscillation_fit(x, coef(fit))
+    n0, A1, A2, Q1, Q2, ϕ1, ϕ2 = coef(fit)
+    @show n0, A1, A2, Q1, Q2, ϕ1, ϕ2
+
+    return c, ĉ
+end
+
 
 function compute_electron_number(ψ::MPS)
     expect(ψ, "Ntot")
@@ -1286,7 +1352,7 @@ function onsite_correlation(ϕ::MPS, bonds, corrtype::String, sites)
         return ninj - nj .* (ni[indices])
 
     elseif corrtype == "particle"
-        ψ = apply_onesite_operator(ϕ, "Cup", sites, j)
+        ψ = apply_onesite_operator(ϕ, "Cdagup", sites, j)
         corrs = zeros(length(indices))
         Threads.@threads for i in 1:length(indices)
             cψ = apply_onesite_operator(ψ, "Cup", sites, indices[i])
@@ -1343,7 +1409,7 @@ function onsite_correlation_checkpoint(ϕ::MPS, bonds, corrtype::String, sites,
         end
 
     elseif corrtype == "particle"
-        ψ = apply_onesite_operator(ϕ, "Cup", sites, j)
+        ψ = apply_onesite_operator(ϕ, "Cdagup", sites, j)
         corrs = getfield(eq_corr, Symbol(corrname))
         for i in 1:length(indices)
             print(i, "-")

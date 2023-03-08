@@ -83,7 +83,7 @@ function _plot_multiple_corrs(loadpaths, gs, corrtype::String; fit_subset::Bool=
             end
             p = plot!(p, log10.(xrange), log10.(abs.(corrs)), label=nothing, c=cmap[i], grid=false)
             p = scatter(p, log10.(xrange), log10.(abs.(corrs)), label=nothing, c=cmap[i], grid=false, ms=1)
-            p = plot!(p, log10.(xrange), log10.(fit), label="k=$(round(b,sigdigits=4))", c=cmap[i], grid=false)
+            p = plot!(p, log10.(xrange), log10.(fit), label="k=$(round(b,sigdigits=2))", c=cmap[i], grid=false)
         catch e
             @show e
             println("gB1=$(g) not yet available")
