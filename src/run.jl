@@ -309,6 +309,83 @@ function correlations_run_checkpoint(Nx, Ny, yperiodic,
         println("Completed dSC_dydy correlation")
         flush(stdout)
     end
+end
+
+function rewrite_correlation(corr_name::String, Nx, Ny, yperiodic,
+    μ, εd, εp, tpd, tpp, Vpd, Upp, Udd,
+    ωB1, ωA1, gB1, gA1,
+    doping;
+    checkpoint_path=@__DIR__,
+    results_path=@__DIR__)
+
+    param_stamp = "$(Nx)Nx_$(Ny)Ny_$(εp)εp_$(tpd)tpd_$(tpp)tpp_$(Vpd)Vpd_$(Upp)Upp_$(Udd)Udd_$(doping)doping_$(ωB1)ωB1_$(ωA1)ωA1_$(gB1)gB1_$(gA1)gA1"
+    save_path = joinpath(checkpoint_path, param_stamp * ".h5")
+    results_save_path = joinpath(results_path, param_stamp * "_correlation_results.h5")
+
+    ## CODE ## 
+    global eq_corr
+
+    # Load in the parameters 
+    p = load_params(save_path)
+    println("Loading parameters from ", save_path)
+
+    # Load the DMRG results         
+    println("Loading DMRG results")
+    dmrg_results = load_dmrg_results(save_path)
+
+    # Load the model  
+    HM = ThreeBandModel(p, dmrg_results) # load in the correct sites if we already have a wavefcn
+
+    # Load in whatever results we have 
+    try
+        global eq_corr = load_equilibrium_correlations(results_save_path)
+        println("Loading equilibrium correlations")
+    catch e
+        @show e
+        start, stop = equilibrium_start_stop(dmrg_results, p)
+        global eq_corr = EquilibriumCorrelations(start, stop, Float64[], Float64[], Float64[], Float64[], Float64[], Float64[], Float64[], Float64[], Float64[], Float64[], Float64[])
+        println("Computing equilibrium correlations")
+    end
+    flush(stdout)
+
+    if corrname == "dSC_dxdx"
+        eq_corr.dSC_dxdx = Float64[]
+        println("Re-doing dSC_dxdx correlation")
+        flush(stdout)
+        @time compute_equilibrium_pairfield_correlation_checkpoint(eq_corr, dmrg_results, HM, p, "dSC_dxdx", "dx-dx", "dx-dx", "dSC", results_save_path)
+        println("Completed dSC_dxdx correlation")
+        flush(stdout)
+    elseif corrname == "spin"
+        eq_corr.spin = Float64[]
+        println("Re-doing spin correlation")
+        flush(stdout)
+        @time compute_equilibrium_onsite_correlation_checkpoint(eq_corr, dmrg_results, HM, p, "spin", "dx-dx", "spin", results_save_path)
+        println("Completed spin correlation")
+        flush(stdout)
+    elseif corrname == "charge"
+        eq_corr.charge = Float64[]
+        println("Re-doing charge correlation")
+        flush(stdout)
+        @time compute_equilibrium_onsite_correlation_checkpoint(eq_corr, dmrg_results, HM, p, "charge", "dx-dx", "charge", results_save_path)
+        println("Completed charge correlation")
+        flush(stdout)
+    elseif corrname == "particle"
+        eq_corr.particle = Float64[]
+        println("Re-doing particle correlation")
+        flush(stdout)
+        @time compute_equilibrium_onsite_correlation_checkpoint(eq_corr, dmrg_results, HM, p, "particle", "dx-dx", "particle", results_save_path)
+        println("Completed particle correlation")
+        flush(stdout)
+    elseif corrname == "sSC"
+        eq_corr.sSC = Float64[]
+        println("Re-doing sSC correlation")
+        flush(stdout)
+        @time compute_equilibrium_onsite_correlation_checkpoint(eq_corr, dmrg_results, HM, p, "sSC", "dx-dx", "sSC", results_save_path)
+        println("Completed sSC correlation")
+        flush(stdout)
+    else
+        @error "$(corrname) not yet implemented"
+    end
 
 
 end
