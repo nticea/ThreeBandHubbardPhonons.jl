@@ -311,7 +311,7 @@ function correlations_run_checkpoint(Nx, Ny, yperiodic,
     end
 end
 
-function rewrite_correlation(corr_name::String, Nx, Ny, yperiodic,
+function rewrite_correlation(corrname::String, Nx, Ny, yperiodic,
     μ, εd, εp, tpd, tpp, Vpd, Upp, Udd,
     ωB1, ωA1, gB1, gA1,
     doping;
