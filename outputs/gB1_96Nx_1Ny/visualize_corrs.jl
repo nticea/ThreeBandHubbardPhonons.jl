@@ -23,10 +23,11 @@ do_save = true
 
 ## PLOTTING ## 
 
-gs = [0, 1, 1.49, 1.6]
-loadpaths = [g0_loadpath, g1_loadpath, g149_loadpath, g16_loadpath]
+gs = [0, 1, 1.49]
+loadpaths = [g0_loadpath, g1_loadpath, g149_loadpath]
 
 p = plot_multiple_correlations(loadpaths, gs)
+plot(p)
 savefig(p, "corrs_96x1.pdf")
 
 

@@ -677,7 +677,8 @@ function phonon_density(dmrg_results::Union{DMRGResultsMinimal,DMRGResults})
 end
 
 # USE JUST LEFT OR RIGHT HALF OF THE SYSTEM!!
-function density_modulation(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}, eq_corrs::EquilibriumCorrelations, orbital::String)
+function density_modulation(dmrg_results::Union{DMRGResults,DMRGResultsMinimal}, eq_corrs::EquilibriumCorrelations, orbital::String;
+    num_wavevectors::Int=1)
     # extract the charge luttinger parameter 
     corrs = eq_corrs.charge
     @assert length(corrs) > 1
@@ -701,8 +702,11 @@ function density_modulation(dmrg_results::Union{DMRGResults,DMRGResultsMinimal},
     end
 
     L = length(c)
+    @show L
     mid = floor(Int, L / 2)
+    @show mid
     right = ceil(Int, 5 * L / 6)
+    @show right
     c = c[mid:right] # take just the right half, discard the last 1/6 of sites
 
     # fit the charge density to the 2 oscillating exponentials 
@@ -711,16 +715,28 @@ function density_modulation(dmrg_results::Union{DMRGResults,DMRGResultsMinimal},
         n0 .+ A1 .* cos.(Q1 .* x .+ ϕ1) .* x .^ (-Kc / 2) .+ A2 .* cos.(Q2 .* x .+ ϕ2) .* x .^ (-Kc / 2)
     end
 
-    p0 = [0.5, 0.05, 0.05, 8, 8, 0, 0]
+    function single_oscillation_fit(x, p)
+        n0, A, Q, ϕ = p
+        n0 .+ A .* cos.(Q .* x .+ ϕ) .* x .^ (-Kc / 2)
+    end
+
     x = collect(1:length(c))
-    fit = LsqFit.curve_fit(double_oscillation_fit, x, c, p0)
 
     # plot the reconstructed fit 
-    ĉ = double_oscillation_fit(x, coef(fit))
-    n0, A1, A2, Q1, Q2, ϕ1, ϕ2 = coef(fit)
-    @show n0, A1, A2, Q1, Q2, ϕ1, ϕ2
+    if num_wavevectors == 1
+        p0 = [0.5, 0.05, 8, 0]
+        fit = LsqFit.curve_fit(single_oscillation_fit, x, c, p0)
+        ĉ = single_oscillation_fit(x, coef(fit))
+    elseif num_wavevectors == 2
+        p0 = [0.5, 0.05, 0.05, 8, 8, 0, 0]
+        fit = LsqFit.curve_fit(double_oscillation_fit, x, c, p0)
+        ĉ = double_oscillation_fit(x, coef(fit))
+    else
+        @error "This number of wavevectors not yet implemented"
+        return
+    end
 
-    return c, ĉ
+    return c, ĉ, coef(fit)
 end
 
 
