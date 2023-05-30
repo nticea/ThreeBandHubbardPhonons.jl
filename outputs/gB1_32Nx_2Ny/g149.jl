@@ -81,7 +81,7 @@ PY_DIM_3 = 1
 DMRG_numsweeps = 30 # total number of iterations 
 DMRG_numsweeps_per_save = 2 # If don't want to save regularly, just set this to DMRG_numsweeps
 DMRG_maxdim = [3500]
-DMRG_noise = [1E-7, 1E-8, 1E-9, 1E-10, 0]
+DMRG_noise = [0]
 DMRG_cutoff = 1E-12
 overwrite_sweeps = true
 
@@ -105,7 +105,7 @@ dmrg_run(Nx, Ny, yperiodic,
         DMRG_maxdim, DMRG_cutoff,
         DMRG_numsweeps_per_save;
         overwrite_sweeps=overwrite_sweeps,
-        disk_save=false,
+        disk_save=true,
         checkpoint_path="/scratch/users/nticea",
         results_path=@__DIR__)
 
