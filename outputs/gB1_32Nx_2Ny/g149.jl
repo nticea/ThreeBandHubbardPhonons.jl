@@ -105,7 +105,7 @@ dmrg_run(Nx, Ny, yperiodic,
         DMRG_maxdim, DMRG_cutoff,
         DMRG_numsweeps_per_save;
         overwrite_sweeps=overwrite_sweeps,
-        disk_save=true,
+        disk_save=false,
         checkpoint_path="/scratch/users/nticea",
         results_path=@__DIR__)
 
